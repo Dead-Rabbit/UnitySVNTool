@@ -6,15 +6,40 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
+
+[Serializable]
+public sealed class SVNToolPrefabWrap
+{
+	public Int32 val = 10;
+	public List<SVNToolPrefab> prefabs = new List<SVNToolPrefab>();
+
+	public SVNToolPrefabWrap(Int32 num)
+	{
+		for (int i = 1; i < num; i++)
+		{
+			prefabs.Add(new SVNToolPrefab());
+		}
+	}
+}
 
 [Serializable]
 public sealed class SVNToolPrefab
 {
-	private Int32 m_Id;		// 唯一ID
-	private String m_Name;	// 预设名称
-	private Int32 m_Order;  // 预设排序
-	private Boolean m_IsGlobal;	// 是否是全局预设
-	private List<SVNToolObj> m_ContentPath = new List<SVNToolObj>();	// 预设中包含的文件、文件夹路径
+	
+	public Int32 ID;		// 唯一ID
+	
+	public String name;	// 预设名称
+	public Int32 order;  // 预设排序
+	public Boolean isGlobal;	// 是否是全局预设
+	public List<SVNToolFolder> contentFolderPath = new List<SVNToolFolder>();	// 预设中包含的文件夹路径
+	public List<SVNToolFile> contentFilePath = new List<SVNToolFile>();			// 预设中包含的文件路径
+
+	[NonSerialized]
+	public Int32 differentCount = 0;	// 当前需要同步的文件数量
+	[NonSerialized]
+	public Int32 totalCount = 0;	// 总共的文件数量
 
 	// TODO 拿到用户预制体后，读入json并序列化为intance放入Editor中
 	private void InitSVNToolPrefabByLocalConfig()
@@ -33,4 +58,29 @@ public sealed class SVNToolPrefab
 
 	// TODO 写入当前用户设定内容到对应配置中
 
+	
+	/// <summary>
+	/// 由配置计算基础信息
+	/// </summary>
+	public void RefreshSVNToolPrefabBaseConfig()
+	{
+		
+	}
+
+	/// <summary>
+	/// 添加路径至配置中
+	/// </summary>
+	/// <param name="path"></param>
+	public void AddNewSVNToolPath(String path)
+	{
+		if (Directory.Exists(path))	// 如果是文件夹
+		{
+			SVNToolFolder newFolder = new SVNToolFolder {path = path};
+			contentFolderPath.Add(newFolder);
+		} else if (File.Exists(path))	// 如果是文件
+		{
+			SVNToolFile newFile = new SVNToolFile {path = path};
+			contentFilePath.Add(newFile);
+		}
+	}
 }

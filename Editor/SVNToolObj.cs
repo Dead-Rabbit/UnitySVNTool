@@ -1,7 +1,7 @@
 ﻿using System;
 
-class SVNToolObj
+public class SVNToolObj
 {
-	private String path;	// 路径
-	private String name;	// 名称
+	public String path;	// 路径
+	public String name;	// 名称
 }
