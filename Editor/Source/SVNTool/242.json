@@ -1,1 +1,1 @@
-{"val":0,"prefabs":[{"ID":0,"name":"123","order":0,"isGlobal":false},{"ID":0,"name":"1","order":0,"isGlobal":false}]}
+{"val":0,"prefabs":[{"ID":0,"name":"Global","order":0,"isGlobal":false,"contentFolderPath":[],"contentFilePath":[{"path":"Assets/Editor/SVNToolFile.cs.meta","name":""}]},{"ID":0,"name":"Another","order":0,"isGlobal":false,"contentFolderPath":[],"contentFilePath":[{"path":"Assets/Editor/SVNToolObj.cs","name":""}]},{"ID":0,"name":"Second","order":0,"isGlobal":false,"contentFolderPath":[],"contentFilePath":[]}]}

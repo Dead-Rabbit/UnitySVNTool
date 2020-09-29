@@ -1,5 +1,6 @@
 ﻿using System;
 
+[Serializable]
 public class SVNToolObj
 {
 	public String path;	// 路径

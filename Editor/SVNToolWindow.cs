@@ -30,6 +30,12 @@ public sealed class SVNToolWindow : EditorWindow
 
     #endregion
 
+    #region 展示配置
+
+    private Single m_RightPathTextLength = 300;
+    
+    #endregion
+
     [MenuItem("SVN/SVN同步工具")]
     public static void ShowWindow()
     {
@@ -96,6 +102,12 @@ public sealed class SVNToolWindow : EditorWindow
             Debug.Log(dataAsJson);
             _prefabWrap = JsonUtility.FromJson<SVNToolPrefabWrap>(dataAsJson);
             storedPrefabs = _prefabWrap.prefabs;
+            
+            // 设定默认选择
+            if (null == m_SelectedPrefab && storedPrefabs.Count > 0)
+            {
+                m_SelectedPrefab = storedPrefabs[0];
+            }
         }
     }
 
@@ -131,10 +143,7 @@ public sealed class SVNToolWindow : EditorWindow
         
         if (GUILayout.Button("保存", GUILayout.Width(50)))
         {
-            // TODO 保存前进行一次过滤
-            _prefabWrap.prefabs = storedPrefabs;
-            File.WriteAllText(filePath, JsonUtility.ToJson(_prefabWrap));
-            m_FinishReadData = false;
+            SaveSVNToolPrefabs();
         }
         EditorGUILayout.EndHorizontal();
         
@@ -216,13 +225,16 @@ public sealed class SVNToolWindow : EditorWindow
                 
                 #region 显示文件夹
 
-                foreach (var folder in m_SelectedPrefab.contentFolderPath)
+                for (int i = 0; i < m_SelectedPrefab.contentFolderPath.Count; i++)
                 {
+                    SVNToolFolder folder = m_SelectedPrefab.contentFolderPath[i];
                     EditorGUILayout.BeginHorizontal(GUI.skin.box);
                     {
-                        // 路径名
-                        EditorGUILayout.LabelField(folder.path, GUILayout.Width(300));
-                        GUILayout.FlexibleSpace();
+                        ShowSVNContentFileAndFolder(folder);
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            m_SelectedPrefab.contentFolderPath.Remove(folder);
+                        }
                     }
                     EditorGUILayout.EndHorizontal();
                 }
@@ -231,13 +243,16 @@ public sealed class SVNToolWindow : EditorWindow
                 
                 #region 显示文件
 
-                foreach (var file in m_SelectedPrefab.contentFilePath)
+                for (int i = 0; i < m_SelectedPrefab.contentFilePath.Count; i++)
                 {
+                    SVNToolFile file = m_SelectedPrefab.contentFilePath[i];
                     EditorGUILayout.BeginHorizontal(GUI.skin.box);
                     {
-                        // 路径名
-                        EditorGUILayout.TextField(file.path, GUILayout.Width(120));
-                        GUILayout.FlexibleSpace();
+                        ShowSVNContentFileAndFolder(file);
+                        if (GUILayout.Button("-", GUILayout.Width(20)))
+                        {
+                            m_SelectedPrefab.contentFilePath.Remove(file);
+                        }
                     }
                     EditorGUILayout.EndHorizontal();
                 }
@@ -264,6 +279,8 @@ public sealed class SVNToolWindow : EditorWindow
             )
             {
                 AddNewSVNToolPath(DragAndDrop.paths);
+                // 保存
+//                SaveSVNToolPrefabs();
             }
         }
 
@@ -330,6 +347,14 @@ public sealed class SVNToolWindow : EditorWindow
     {
         return null != m_SelectedPrefab;
     }
+
+    // 在右侧展示文件或文件夹路径
+    private void ShowSVNContentFileAndFolder(SVNToolObj obj)
+    {
+        // 路径名
+        EditorGUILayout.LabelField(obj.path, GUILayout.Width(m_RightPathTextLength));
+        GUILayout.FlexibleSpace();
+    }
     
     // 添加路径到当前选择中
     private Boolean AddNewSVNToolPath(String[] paths)
@@ -354,5 +379,12 @@ public sealed class SVNToolWindow : EditorWindow
         }
         
         return true;
+    }
+    
+    // 保存预设
+    private void SaveSVNToolPrefabs()
+    {
+        _prefabWrap.prefabs = storedPrefabs;
+        File.WriteAllText(filePath, JsonUtility.ToJson(_prefabWrap));
     }
 }
