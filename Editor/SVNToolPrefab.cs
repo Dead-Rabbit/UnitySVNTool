@@ -41,6 +41,16 @@ public sealed class SVNToolPrefab
 	[NonSerialized]
 	public Int32 totalCount = 0;	// 总共的文件数量
 
+	public SVNToolPrefab()
+	{
+		
+	}
+
+	public SVNToolPrefab(Int32 id)
+	{
+		ID = id;
+	}
+
 	// TODO 拿到用户预制体后，读入json并序列化为intance放入Editor中
 	private void InitSVNToolPrefabByLocalConfig()
 	{
@@ -75,11 +85,21 @@ public sealed class SVNToolPrefab
 	{
 		if (Directory.Exists(path))	// 如果是文件夹
 		{
-			SVNToolFolder newFolder = new SVNToolFolder {path = path};
+			foreach (SVNToolFolder folder in contentFolderPath)
+			{
+				if (folder.path.Equals(path)) return ;
+			}
+			
+			SVNToolFolder newFolder = new SVNToolFolder(path);
 			contentFolderPath.Add(newFolder);
 		} else if (File.Exists(path))	// 如果是文件
 		{
-			SVNToolFile newFile = new SVNToolFile {path = path};
+			foreach (SVNToolFile file in contentFilePath)
+			{
+				if (file.path.Equals(path)) return ;
+			}
+			
+			SVNToolFile newFile = new SVNToolFile(path);
 			contentFilePath.Add(newFile);
 		}
 	}
