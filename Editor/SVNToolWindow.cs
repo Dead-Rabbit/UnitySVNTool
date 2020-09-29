@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using Editor;
+using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -24,6 +25,9 @@ public sealed class SVNToolWindow : EditorWindow
     private List<SVNToolPrefab> storedPrefabs = new List<SVNToolPrefab>();
 
     private String testClipStr = "C:/Users/Jack/Documents/MGame/MGame_Trunk/MProject/";    // Application.dataPath
+    
+    List<SVNToolFile> showResult = new List<SVNToolFile>();
+    List<SVNToolFile> hideResult = new List<SVNToolFile>();
 
     #endregion
 
@@ -37,7 +41,7 @@ public sealed class SVNToolWindow : EditorWindow
 
     #region 展示配置
 
-    private Single m_RightPathTextLength = 500;
+    private Single m_RightPathTextLength = 300;
     
     #endregion
 
@@ -123,11 +127,12 @@ public sealed class SVNToolWindow : EditorWindow
     /// <summary>
     /// 显示预设内容
     /// </summary>
+    /// TODO 加入排序功能
     Vector2 leftScrollPos = Vector2.zero;
     Vector2 rightScrollPos = Vector2.zero;
     private void SetSVNToolPrefabGUI()
     {
-        EditorGUILayout.BeginHorizontal(GUILayout.Height(500));
+        EditorGUILayout.BeginHorizontal(GUILayout.Height(400));
         
         #region 选择预设
 
@@ -171,6 +176,13 @@ public sealed class SVNToolWindow : EditorWindow
             if (GUILayout.Button("开启配置", GUILayout.Width(70)))
             {
                 m_CurrentEditState = EnumSVNToolWindowEditState.EDIT;
+                if (null != m_SelectedPrefab)
+                {
+                    foreach (SVNToolFolder folder in m_SelectedPrefab.contentFolderPath)
+                    {
+                        folder.openFolder = false;
+                    }
+                }
             }
         }
 
@@ -190,6 +202,9 @@ public sealed class SVNToolWindow : EditorWindow
                 EditorGUILayout.BeginHorizontal(GUI.skin.box);
                 {
                     GUI.backgroundColor = Color.white;
+
+                    currentPrefab.ifSelected = GUILayout.Toggle(currentPrefab.ifSelected, "同步", GUILayout.Width(40));
+                    
                     // 预设名
                     currentPrefab.name = EditorGUILayout.TextField(currentPrefab.name, GUILayout.Width(120));
 
@@ -217,7 +232,7 @@ public sealed class SVNToolWindow : EditorWindow
 
         #endregion
 
-        #region 操作具体内容
+        #region 操作主体
 
         EditorGUILayout.BeginVertical(GUI.skin.box);
         
@@ -258,7 +273,7 @@ public sealed class SVNToolWindow : EditorWindow
                 // 当前是否在进行同步
                 if (CheckIfSelectedPrefabSyncing())
                 {
-                    GUILayout.Label("加载中", EditorStyles.miniLabel);
+                    GUILayout.Label("加载中");
                 } else {
                     
                     #region 显示文件夹
@@ -287,7 +302,18 @@ public sealed class SVNToolWindow : EditorWindow
                                     else if (folder.GetSVNToolFileCurrentSyncState() == EnumSVNToolFolderNeedSyncState.SELECTED_PART)
                                         SetSVNToolFolderSelectedParyColor();
 
-                                    EditorGUILayout.LabelField(folder.GetTotalSelectedSVNToolFiles() + "/" + folder.contentNeedSyncFiles.Count, GUILayout.Width(50));
+                                    Int32 selectedFolderFileCount = folder.GetTotalSelectedSVNToolFiles().Count;
+                                    if (GUILayout.Button(selectedFolderFileCount == 0 ? "全选" : "取消选择", GUILayout.Width(60)))
+                                    {
+                                        // 全选
+                                        if (selectedFolderFileCount == 0)
+                                            foreach (SVNToolFile file in folder.contentNeedSyncFiles)
+                                                file.ifSelected = true;
+                                        else
+                                            foreach (SVNToolFile file in folder.contentNeedSyncFiles)
+                                                file.ifSelected = false;
+                                    }
+                                    EditorGUILayout.LabelField("已选 " + selectedFolderFileCount + "/" + folder.contentNeedSyncFiles.Count, GUILayout.Width(50));
                                     SetDefaultSVNToolBackgroundColor();
                                     folder.openFolder = EditorGUILayout.Foldout(folder.openFolder, folder.name, true);
                                 }
@@ -380,11 +406,49 @@ public sealed class SVNToolWindow : EditorWindow
         #endregion
 
         EditorGUILayout.EndHorizontal();
+
+        if (CheckIfSelectedPrefabSyncing())
+        {
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            {
+                GUILayout.Label("加载中");
+            }
+            EditorGUILayout.EndVertical();
+        } else {
         
-        // 结果列表
-        EditorGUILayout.BeginHorizontal(GUI.skin.box);
-        GUILayout.Label(SVNToolUtil.Syncing.ToString());
-        EditorGUILayout.EndHorizontal();
+            #region 未选择结果列表
+
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            {
+                GUILayout.Label("配置文件未选择");
+
+                foreach (SVNToolFile file in hideResult)
+                {
+                    GUILayout.Label(file.path);
+                }
+            }
+            EditorGUILayout.EndVertical();
+
+            #endregion
+
+            #region 已选结果列表
+
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            {
+                GUILayout.Label("当前已选择");
+
+                RefreshAllSelectedSVNToolFiles();    // 刷新值
+
+                foreach (SVNToolFile file in showResult)
+                {
+                    GUILayout.Label(file.path);
+                }
+            }
+            EditorGUILayout.EndVertical();
+            
+            #endregion
+        }
+
     }
 
     #endregion
@@ -529,6 +593,10 @@ public sealed class SVNToolWindow : EditorWindow
         File.WriteAllText(filePath, JsonUtility.ToJson(_prefabWrap));
 
         m_CurrentEditState = EnumSVNToolWindowEditState.VIEW;
+        foreach (SVNToolFolder folder in m_SelectedPrefab.contentFolderPath)
+        {
+            folder.openFolder = true;
+        }
     }
     
     // 设定选中的预设
@@ -548,4 +616,77 @@ public sealed class SVNToolWindow : EditorWindow
         SVNToolUtil.GetSVNToolObjStateJobHandle(prefab);
         prefab.initedFileStatus = true;    // 设定prefab的初始化状态
     }
+
+    // 获取所有当前选择的文件路径
+    private void RefreshAllSelectedSVNToolFiles()
+    {
+        showResult.Clear();
+        hideResult.Clear();
+        foreach (SVNToolPrefab prefab in storedPrefabs)
+        {
+            if (!prefab.ifSelected)
+                continue;
+
+            // 文件夹下所有已选文件
+            foreach (SVNToolFolder folder in prefab.contentFolderPath)
+            {
+                foreach (SVNToolFile file in folder.contentNeedSyncFiles)
+                {
+                    if (file.ifSelected)
+                    {
+                        AddSVNToolFileIntoShowResult(file);
+                    }
+                    else
+                    {
+                        AddSVNToolFileIntoHideResult(file);
+                    }
+                }
+            }
+
+            foreach (SVNToolFile file in prefab.contentFilePath)
+            {
+                if (file.ifSelected)
+                {
+                    AddSVNToolFileIntoShowResult(file);
+                }
+                else
+                {
+                    AddSVNToolFileIntoHideResult(file);
+                }
+            }
+        }
+    }
+    
+    // 添加路径到展示路径中
+    private void AddSVNToolFileIntoShowResult(SVNToolFile file)
+    {
+        Boolean ifExist = false;
+        foreach (SVNToolFile toolFile in showResult)
+        {
+            if (toolFile.path.Equals(file.path))
+            {
+                ifExist = true;
+                break;
+            }
+        }
+        if (!ifExist)
+            showResult.Add(file);
+    }
+    
+    // 添加路径到未选择路径中
+    private void AddSVNToolFileIntoHideResult(SVNToolFile file)
+    {
+        Boolean ifExist = false;
+        foreach (SVNToolFile toolFile in hideResult)
+        {
+            if (toolFile.path.Equals(file.path))
+            {
+                ifExist = true;
+                break;
+            }
+        }
+        if (!ifExist)
+            hideResult.Add(file);
+    }
+    
 }

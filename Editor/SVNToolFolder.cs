@@ -13,9 +13,7 @@ public class SVNToolFolder : SVNToolObj
     // 当前文件夹下所需同步的文件
     [NonSerialized] public List<SVNToolFile> contentNeedSyncFiles = new List<SVNToolFile>();
     
-    [NonSerialized] public Boolean ifSelectAll = true;
-
-    public Boolean openFolder = false;
+    [NonSerialized] public Boolean openFolder = true;
     
     public SVNToolFolder(String path) : base(path)
     {
@@ -25,7 +23,7 @@ public class SVNToolFolder : SVNToolObj
     public void InitSVNToolFolder()
     {
         contentNeedSyncFiles = new List<SVNToolFile>();
-        ifSelectAll = true;
+        openFolder = true;
     }
 
     public void SetSVNToolFolderNeedSyncFiles(List<SVNToolFile> files)
@@ -36,23 +34,23 @@ public class SVNToolFolder : SVNToolObj
             file.CanBeCommit = true;
         }
     }
-
+    
     /// <summary>
     /// 获取当前选择的文件数量
     /// </summary>
     /// <returns></returns>
-    public Int32 GetTotalSelectedSVNToolFiles()
+    public List<SVNToolFile> GetTotalSelectedSVNToolFiles()
     {
-        Int32 res = 0;
+        List<SVNToolFile> selectedFiles = new List<SVNToolFile>();
         foreach (SVNToolFile file in contentNeedSyncFiles)
         {
             if (file.ifSelected)
             {
-                res++;
+                selectedFiles.Add(file);
             }
         }
 
-        return res;
+        return selectedFiles;
     }
 
     /// <summary>
@@ -65,13 +63,13 @@ public class SVNToolFolder : SVNToolObj
     
     public EnumSVNToolFolderNeedSyncState GetSVNToolFileCurrentSyncState()
     {
-        if (contentNeedSyncFiles.Count > 0 && ifSelectAll)
+        if (contentNeedSyncFiles.Count > 0)
         {
-            return EnumSVNToolFolderNeedSyncState.SELECTED_ALL;
-        }
-
-        if (contentNeedSyncFiles.Count > 0 && !ifSelectAll)
-        {
+            if (GetTotalSelectedSVNToolFiles().Count == contentNeedSyncFiles.Count)
+            {
+                return EnumSVNToolFolderNeedSyncState.SELECTED_ALL;
+            }
+        
             return EnumSVNToolFolderNeedSyncState.SELECTED_PART;
         }
         

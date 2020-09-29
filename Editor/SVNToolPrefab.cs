@@ -39,18 +39,17 @@ public sealed class SVNToolPrefab
 	[NonSerialized] public Int32 differentCount = 0;	// 当前需要同步的文件数量
 	[NonSerialized] public Int32 totalCount = 0;	// 总共的文件数量
 	[NonSerialized] public Boolean initedFileStatus = false;
+	[NonSerialized] public Boolean ifSelected = true;
 
 	public SVNToolPrefab()
 	{
-		
 	}
 
 	public SVNToolPrefab(Int32 id)
 	{
 		ID = id;
 	}
-
-	// TODO 拿到用户预制体后，读入json并序列化为intance放入Editor中
+	
 	private void InitSVNToolPrefabByLocalConfig()
 	{
 		//if (string.IsNullOrEmpty(whiteListFileName)) { return; }
@@ -65,9 +64,6 @@ public sealed class SVNToolPrefab
 		//CLoseFile();
 	}
 
-	// TODO 写入当前用户设定内容到对应配置中
-
-	
 	/// <summary>
 	/// 由配置计算基础信息
 	/// </summary>
