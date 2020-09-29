@@ -39,7 +39,7 @@ public sealed class SVNToolPrefab
 	[NonSerialized] public Int32 differentCount = 0;	// 当前需要同步的文件数量
 	[NonSerialized] public Int32 totalCount = 0;	// 总共的文件数量
 	[NonSerialized] public Boolean initedFileStatus = false;
-	[NonSerialized] public Boolean ifSelected = true;
+	public Boolean ifSelected = true;
 
 	public SVNToolPrefab()
 	{
