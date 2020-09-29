@@ -103,7 +103,7 @@ public sealed class SVNToolWindow : EditorWindow
         // 反序列化
         if (File.Exists(filePath))
         {
-            string dataAsJson = File.ReadAllText(filePath); //读取所有数据送到json格式的字符串里面。
+            string dataAsJson = File.ReadAllText(filePath);     //读取所有数据送到json格式的字符串里面。
             Debug.Log(dataAsJson);
             _prefabWrap = JsonUtility.FromJson<SVNToolPrefabWrap>(dataAsJson);
             storedPrefabs = _prefabWrap.prefabs;
@@ -255,87 +255,97 @@ public sealed class SVNToolWindow : EditorWindow
         {
             if (null != m_SelectedPrefab)
             {
-                #region 显示文件夹
-                
-                for (int i = 0; i < m_SelectedPrefab.contentFolderPath.Count; i++)
+                // 当前是否在进行同步
+                if (CheckIfSelectedPrefabSyncing())
                 {
-                    SVNToolFolder folder = m_SelectedPrefab.contentFolderPath[i];
-                    EditorGUILayout.BeginHorizontal(GUI.skin.box);
-                    {
-                        // 配置状态
-                        if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
-                        {
-                            EditorGUILayout.LabelField("【文件夹】\t" + folder.name, GUILayout.Width(m_RightPathTextLength));
-                            GUILayout.FlexibleSpace();
-                            if (GUILayout.Button("Del", GUILayout.Width(30)))
-                            {
-                                m_SelectedPrefab.contentFolderPath.Remove(folder);
-                            }
-                        }
-                        else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
-                            folder.ifSelectAll = GUILayout.Toggle(folder.ifSelectAll, "选择所有", GUILayout.Width(60));
-                            m_ShowFolding = EditorGUILayout.Foldout(m_ShowFolding, folder.name, true);
-                            if (m_ShowFolding)
-                            {
-                                //折叠开关开启时需要显示的内容
-                            }
-                            if (GUILayout.Button("测试获取未同步文件", GUILayout.Width(130)))
-                            {
-                                folder.RefreshSVNToolFolderNeedSyncFiles();
-                            }
-                        }
-                    }
-                    EditorGUILayout.EndHorizontal();
-                }
-
-                #endregion
-                
-                #region 显示文件
-
-                for (int i = 0; i < m_SelectedPrefab.contentFilePath.Count; i++)
-                {
-                    SVNToolFile file = m_SelectedPrefab.contentFilePath[i];
-                    if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW && !file.CanBeCommit)
-                        continue;
+                    GUILayout.Label("加载中", EditorStyles.miniLabel);
+                } else {
                     
-                    EditorGUILayout.BeginHorizontal(GUI.skin.box);
+                    #region 显示文件夹
+                    
+                    for (int i = 0; i < m_SelectedPrefab.contentFolderPath.Count; i++)
                     {
-                        // 编辑模式
-                        if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
+                        SVNToolFolder folder = m_SelectedPrefab.contentFolderPath[i];
+                        EditorGUILayout.BeginVertical(GUI.skin.box);
                         {
-                            EditorGUILayout.LabelField("【 文 件 】\t" + file.name, GUILayout.Width(m_RightPathTextLength));
-                            GUILayout.FlexibleSpace();
-                            if (GUILayout.Button("Del", GUILayout.Width(30)))
+                            EditorGUILayout.BeginHorizontal();
                             {
-                                m_SelectedPrefab.contentFilePath.Remove(file);
-                            }
-                        }
-                        // 浏览模式
-                        else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
-                            // 浏览模式 - 仅展示需同步文件
-                            if (file.GetSVNToolFileCurrentSyncState() == EnumSVNToolFileNeedSyncState.SELECTED_NEED_COMMIT)
-                                SetSVNToolFileCanBeCommitColor();
-                            else if (file.GetSVNToolFileCurrentSyncState() == EnumSVNToolFileNeedSyncState.NEED_COMMIT_WITHOUT_SEELCTED)
-                                SetSVNToolFileNeedSelectedColor();
+                                // 配置状态
+                                if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
+                                {
+                                    EditorGUILayout.LabelField("【文件夹】\t" + folder.name, GUILayout.Width(m_RightPathTextLength));
+                                    GUILayout.FlexibleSpace();
+                                    if (GUILayout.Button("Del", GUILayout.Width(30)))
+                                    {
+                                        m_SelectedPrefab.contentFolderPath.Remove(folder);
+                                    }
+                                }
+                                else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
+                                    // 浏览模式 - 仅展示需同步文件
+                                    if (folder.GetSVNToolFileCurrentSyncState() == EnumSVNToolFolderNeedSyncState.SELECTED_ALL)
+                                        SetSVNToolFileCanBeCommitColor();
+                                    else if (folder.GetSVNToolFileCurrentSyncState() == EnumSVNToolFolderNeedSyncState.SELECTED_PART)
+                                        SetSVNToolFolderSelectedParyColor();
 
-                            file.ifSelected = GUILayout.Toggle(file.ifSelected, "是否提交", GUILayout.Width(60));
-                            EditorGUILayout.LabelField(file.name, GUILayout.MinWidth(m_RightPathTextLength));
-                            GUILayout.FlexibleSpace();
+                                    EditorGUILayout.LabelField(folder.GetTotalSelectedSVNToolFiles() + "/" + folder.contentNeedSyncFiles.Count, GUILayout.Width(50));
+                                    SetDefaultSVNToolBackgroundColor();
+                                    folder.openFolder = EditorGUILayout.Foldout(folder.openFolder, folder.name, true);
+                                }
+                            }
+                            EditorGUILayout.EndHorizontal();
                             
-                            GUI.enabled = !CheckIfSelectedPrefabSyncing();
-                            if (GUILayout.Button("查看差异", GUILayout.Width(70)))
+                            if (folder.openFolder)
                             {
-                                UESvnOperation.GetSvnOperation().DiffFile(file.path);
+                                EditorGUILayout.BeginVertical();
+                                {
+                                    //折叠开关开启时需要显示的内容
+                                    foreach (SVNToolFile file in folder.contentNeedSyncFiles)
+                                    {
+                                        EditorGUILayout.BeginHorizontal(GUI.skin.box);
+                                        {
+                                            SVNToolWindowWriteFileField(file);
+                                        }
+                                        EditorGUILayout.EndHorizontal();
+                                    }
+                                }
+                                EditorGUILayout.EndVertical();
                             }
-                            GUI.enabled = true;
-
-                            SetDefaultSVNToolBackgroundColor();
                         }
+                        EditorGUILayout.EndVertical();
                     }
-                    EditorGUILayout.EndHorizontal();
-                }
 
-                #endregion
+                    #endregion
+                    
+                    #region 显示文件
+
+                    for (int i = 0; i < m_SelectedPrefab.contentFilePath.Count; i++)
+                    {
+                        SVNToolFile file = m_SelectedPrefab.contentFilePath[i];
+                        if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW && !file.CanBeCommit)
+                            continue;
+                        
+                        EditorGUILayout.BeginHorizontal(GUI.skin.box);
+                        {
+                            // 编辑模式
+                            if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
+                            {
+                                EditorGUILayout.LabelField("【 文 件 】\t" + file.name, GUILayout.Width(m_RightPathTextLength));
+                                GUILayout.FlexibleSpace();
+                                if (GUILayout.Button("Del", GUILayout.Width(30)))
+                                {
+                                    m_SelectedPrefab.contentFilePath.Remove(file);
+                                }
+                            }
+                            // 浏览模式
+                            else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
+                                SVNToolWindowWriteFileField(file);
+                            }
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+
+                    #endregion
+                }
             }
         }
         EditorGUILayout.EndScrollView();
@@ -409,6 +419,36 @@ public sealed class SVNToolWindow : EditorWindow
 
     #endregion
 
+    #region 右侧文件写入
+
+    private void SVNToolWindowWriteFileField(SVNToolFile file)
+    {
+        // 浏览模式 - 仅展示需同步文件
+        if (file.GetSVNToolFileCurrentSyncState() == EnumSVNToolFileNeedSyncState.SELECTED_NEED_COMMIT)
+            SetSVNToolFileCanBeCommitColor();
+        else if (file.GetSVNToolFileCurrentSyncState() == EnumSVNToolFileNeedSyncState.NEED_COMMIT_WITHOUT_SEELCTED)
+            SetSVNToolFileNeedSelectedColor();
+
+        file.ifSelected = GUILayout.Toggle(file.ifSelected, "是否提交", GUILayout.Width(60));
+        EditorGUILayout.LabelField(file.name, GUILayout.MinWidth(m_RightPathTextLength));
+        GUILayout.FlexibleSpace();
+                            
+//        GUI.enabled = !CheckIfSelectedPrefabSyncing();
+        if (GUILayout.Button("完整路径", GUILayout.Width(70)))
+        {
+            ShowNotification(new GUIContent(file.path));
+        }
+        if (GUILayout.Button("查看差异", GUILayout.Width(70)))
+        {
+            UESvnOperation.GetSvnOperation().DiffFile(file.path);
+        }
+//        GUI.enabled = true;
+
+        SetDefaultSVNToolBackgroundColor();
+    }
+
+    #endregion
+
     #region 颜色设定
 
     // 设定回归默认颜色
@@ -427,7 +467,13 @@ public sealed class SVNToolWindow : EditorWindow
     // 设定文件可同步的颜色 
     private void SetSVNToolFileNeedSelectedColor()
     {
-        GUI.backgroundColor = Color.red;
+        GUI.backgroundColor = Color.yellow;
+    }
+    
+    // 设定文件夹未全选的颜色 
+    private void SetSVNToolFolderSelectedParyColor()
+    {
+        GUI.backgroundColor = Color.yellow;
     }
     
     // 设定文件需要选择的颜色

@@ -60,7 +60,7 @@ public static class SVNToolUtil
             Syncing = true;
             foreach (SVNToolFolder folder in folders)
             {
-                folder.contentNeedSyncFiles = GetNeedCommitSVNToolFileList(folder.path);
+                folder.SetSVNToolFolderNeedSyncFiles(GetNeedCommitSVNToolFileList(folder.path));
             }
             Syncing = false;
         }
@@ -87,7 +87,7 @@ public static class SVNToolUtil
         String commandRes = UESvnOperation.GetSvnOperation().FolderStatus(path);
         if (String.IsNullOrEmpty(commandRes))
         {
-            return null;
+            return res;
         }
 
         // 拆解SVN结果
@@ -95,7 +95,7 @@ public static class SVNToolUtil
         foreach (string s in resList)
         {
             if (s.Length > 8) {
-                res.Add(new SVNToolFile(s.Substring(8)));
+                res.Add(new SVNToolFile(s.Substring(8).Replace('\\', '/')));
             }
         }
         

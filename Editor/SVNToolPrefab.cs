@@ -73,6 +73,7 @@ public sealed class SVNToolPrefab
 	/// </summary>
 	public void InitSVNToolPrefabFileAndFolderInfo()
 	{
+		Debug.Log("Init prefab");
 		foreach (SVNToolFile file in contentFilePath)
 		{
 			file.name = file.path.Substring(file.path.LastIndexOf("/") + 1);
@@ -81,6 +82,7 @@ public sealed class SVNToolPrefab
 		foreach (SVNToolFolder folder in contentFolderPath)
 		{
 			folder.name = folder.path.Substring(folder.path.LastIndexOf("/") + 1);
+			folder.InitSVNToolFolder();
 		}
 	}
 

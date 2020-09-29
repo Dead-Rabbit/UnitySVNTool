@@ -18,7 +18,6 @@ public class SVNToolFile : SVNToolObj
     public SVNToolFile(String path) : base(path)
     {
         this.path = path;
-        Debug.Log(path);
     }
 
     public EnumSVNToolFileNeedSyncState GetSVNToolFileCurrentSyncState()
