@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Editor;
 using NUnit.Framework;
 using UnityEditor;
@@ -56,7 +57,7 @@ public sealed class SVNToolWindow : EditorWindow
         // 读取当前设置的工号
         m_SvnToolUserID = PlayerPrefs.GetString(SVN_TOOL_USER_ID_PREF_NAME);
         
-        minSize = new Vector2(600, 600);
+        minSize = new Vector2(850, 600);
     }
 
     /// <summary>
@@ -232,7 +233,7 @@ public sealed class SVNToolWindow : EditorWindow
 
         #endregion
 
-        #region 操作主体
+        #region 预设与配置主体
 
         EditorGUILayout.BeginVertical(GUI.skin.box);
         
@@ -407,6 +408,8 @@ public sealed class SVNToolWindow : EditorWindow
 
         EditorGUILayout.EndHorizontal();
 
+        #region 结果列表
+
         if (CheckIfSelectedPrefabSyncing())
         {
             EditorGUILayout.BeginVertical(GUI.skin.box);
@@ -442,12 +445,33 @@ public sealed class SVNToolWindow : EditorWindow
                 foreach (SVNToolFile file in showResult)
                 {
                     GUILayout.Label(file.path);
+//                    GUILayout.Label(UESvnOperation.GetSvnOperation().GetSVNPathByPath(file.path));
                 }
             }
             EditorGUILayout.EndVertical();
             
             #endregion
         }
+
+        #endregion
+
+        #region 操作组
+
+        EditorGUILayout.BeginHorizontal();
+        {
+            if (GUILayout.Button("提交"))
+            {
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (SVNToolFile file in showResult)
+                {
+                    stringBuilder.Append(file.path).Append("*");
+                }
+                UESvnOperation.GetSvnOperation().CommitFile(stringBuilder.ToString());
+            }
+        }
+        EditorGUILayout.EndHorizontal();
+
+        #endregion
 
     }
 
