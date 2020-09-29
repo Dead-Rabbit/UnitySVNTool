@@ -6,6 +6,8 @@ using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
 using UnityEditor;
+using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 [System.Runtime.InteropServices.StructLayout(LayoutKind.Sequential)]
 public class SECURITY_ATTRIBUTES
@@ -228,6 +230,8 @@ public class UESvnOperation
 
         commandline += GetAuthenCmd();
         ProcessCommand(commandline);
+        
+        Debug.Log(OutputResult);
 
         if (string.IsNullOrEmpty(OutputResult))
         {
@@ -239,6 +243,53 @@ public class UESvnOperation
         return true;
     }
 
+    public bool FileStatus(string path = "")
+    {
+        if (!Initialized)
+            return false;
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return false;
+        }
+
+        string commandline;
+        String output = "";
+        commandline = string.Format(" status {0}", path);
+        commandline += GetAuthenCmd();
+        ProcessCommandShowOutput(commandline, out output);
+
+        if (String.IsNullOrEmpty(output))
+        {
+            return false;
+        }
+
+        return true;
+    }
+    
+    public String FolderStatus(string path = "")
+    {
+        if (!Initialized)
+            return null;
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        string commandline;
+        String output = "";
+        commandline = string.Format(" status {0}", path);
+        commandline += GetAuthenCmd();
+        ProcessCommandShowOutput(commandline, out output);
+        
+        if (String.IsNullOrEmpty(output))
+        {
+            return null;
+        }
+
+        return output;
+    }
 
     public bool StatusShowLog(out string StandLog, string path = "")
     {
@@ -375,7 +426,7 @@ public class UESvnOperation
     }
 
 	private void ShowSvnError(string OutputResult)
-	{
+    {
         if (OutputResult.Contains("Write error"))
         {
             return;

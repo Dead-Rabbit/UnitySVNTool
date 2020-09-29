@@ -36,10 +36,9 @@ public sealed class SVNToolPrefab
 	public List<SVNToolFolder> contentFolderPath = new List<SVNToolFolder>();	// 预设中包含的文件夹路径
 	public List<SVNToolFile> contentFilePath = new List<SVNToolFile>();			// 预设中包含的文件路径
 
-	[NonSerialized]
-	public Int32 differentCount = 0;	// 当前需要同步的文件数量
-	[NonSerialized]
-	public Int32 totalCount = 0;	// 总共的文件数量
+	[NonSerialized] public Int32 differentCount = 0;	// 当前需要同步的文件数量
+	[NonSerialized] public Int32 totalCount = 0;	// 总共的文件数量
+	[NonSerialized] public Boolean initedFileStatus = false;
 
 	public SVNToolPrefab()
 	{
@@ -72,9 +71,17 @@ public sealed class SVNToolPrefab
 	/// <summary>
 	/// 由配置计算基础信息
 	/// </summary>
-	public void RefreshSVNToolPrefabBaseConfig()
+	public void InitSVNToolPrefabFileAndFolderInfo()
 	{
+		foreach (SVNToolFile file in contentFilePath)
+		{
+			file.name = file.path.Substring(file.path.LastIndexOf("/") + 1);
+		}
 		
+		foreach (SVNToolFolder folder in contentFolderPath)
+		{
+			folder.name = folder.path.Substring(folder.path.LastIndexOf("/") + 1);
+		}
 	}
 
 	/// <summary>

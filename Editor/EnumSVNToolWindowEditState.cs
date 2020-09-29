@@ -10,8 +10,8 @@ namespace Editor
     public enum EnumSVNToolFileNeedSyncState
     {
         NONE,
-        NEED_UPDATE,
-        NEED_ADD,
-        NEED_REMOVE
+        SELECTED_NEED_COMMIT,    // 已被选中，未提交
+        NEED_COMMIT_WITHOUT_SEELCTED,    // 可提交，位被选中
+        CANNOT_BE_COMMIT,    // 不可提交
     }
 }

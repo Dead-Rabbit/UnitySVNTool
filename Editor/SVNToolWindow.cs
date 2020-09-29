@@ -23,6 +23,8 @@ public sealed class SVNToolWindow : EditorWindow
     private SVNToolPrefabWrap _prefabWrap = new SVNToolPrefabWrap(5);
     private List<SVNToolPrefab> storedPrefabs = new List<SVNToolPrefab>();
 
+    private String testClipStr = "C:/Users/Jack/Documents/MGame/MGame_Trunk/MProject/";    // Application.dataPath
+
     #endregion
 
     #region 选择状态相关
@@ -35,7 +37,7 @@ public sealed class SVNToolWindow : EditorWindow
 
     #region 展示配置
 
-    private Single m_RightPathTextLength = 300;
+    private Single m_RightPathTextLength = 500;
     
     #endregion
 
@@ -105,11 +107,15 @@ public sealed class SVNToolWindow : EditorWindow
             Debug.Log(dataAsJson);
             _prefabWrap = JsonUtility.FromJson<SVNToolPrefabWrap>(dataAsJson);
             storedPrefabs = _prefabWrap.prefabs;
+            foreach (SVNToolPrefab prefab in storedPrefabs)
+            {
+                prefab.InitSVNToolPrefabFileAndFolderInfo();
+            }
             
             // 设定默认选择
             if (null == m_SelectedPrefab && storedPrefabs.Count > 0)
             {
-                m_SelectedPrefab = storedPrefabs[0];
+                SelectCurrentSVNToolPrefab(storedPrefabs[0]);
             }
         }
     }
@@ -197,7 +203,7 @@ public sealed class SVNToolWindow : EditorWindow
                     }
                     if (GUILayout.Button("查看", GUILayout.Width(40)))
                     {
-                        m_SelectedPrefab = currentPrefab;
+                        DoSyncSVNToolPrefabStatus(currentPrefab);
                     }
                 }
                 
@@ -217,16 +223,29 @@ public sealed class SVNToolWindow : EditorWindow
         
         EditorGUILayout.BeginHorizontal();
         
+        GUIStyle redGUISkin = new GUIStyle();
+        redGUISkin.fontSize = 14;
+        redGUISkin.normal.textColor = Color.red;
         if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
         {
             EditorGUILayout.LabelField("预设配置");
-            GUIStyle titleStyle2 = new GUIStyle();
-            titleStyle2.fontSize = 14;
-            titleStyle2.normal.textColor = Color.red;
-            GUILayout.Label(null == m_SelectedPrefab ? "需要左侧选择目标预设" : "拖拽文件/文件夹到下方即可添加", titleStyle2);
+            GUILayout.Label(null == m_SelectedPrefab ? "需要左侧选择目标预设" : "拖拽文件/文件夹到下方即可添加", redGUISkin);
         } else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW)
         {
-            EditorGUILayout.LabelField("需同步文件");
+            EditorGUILayout.LabelField("配置文件");
+            GUILayout.FlexibleSpace();
+            if (CheckIfSelectedPrefabSyncing())
+            {
+                GUILayout.Label("同步中...", redGUISkin);
+            }
+            
+            GUI.enabled = !CheckIfSelectedPrefabSyncing();
+            if (GUILayout.Button("刷新同步"))
+            {
+                DoSyncSVNToolPrefabStatus(m_SelectedPrefab);
+            }
+
+            GUI.enabled = true;
         }
         EditorGUILayout.EndHorizontal();
         
@@ -246,7 +265,7 @@ public sealed class SVNToolWindow : EditorWindow
                         // 配置状态
                         if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
                         {
-                            EditorGUILayout.LabelField("【文件夹】\t" + folder.path, GUILayout.Width(m_RightPathTextLength));
+                            EditorGUILayout.LabelField("【文件夹】\t" + folder.name, GUILayout.Width(m_RightPathTextLength));
                             GUILayout.FlexibleSpace();
                             if (GUILayout.Button("Del", GUILayout.Width(30)))
                             {
@@ -254,11 +273,15 @@ public sealed class SVNToolWindow : EditorWindow
                             }
                         }
                         else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
-                            // TODO 判断当前文件夹下是否存在未同步文件
-                            m_ShowFolding = EditorGUILayout.Foldout(m_ShowFolding, folder.path, true);
+                            folder.ifSelectAll = GUILayout.Toggle(folder.ifSelectAll, "选择所有", GUILayout.Width(60));
+                            m_ShowFolding = EditorGUILayout.Foldout(m_ShowFolding, folder.name, true);
                             if (m_ShowFolding)
                             {
                                 //折叠开关开启时需要显示的内容
+                            }
+                            if (GUILayout.Button("测试获取未同步文件", GUILayout.Width(130)))
+                            {
+                                folder.RefreshSVNToolFolderNeedSyncFiles();
                             }
                         }
                     }
@@ -272,28 +295,41 @@ public sealed class SVNToolWindow : EditorWindow
                 for (int i = 0; i < m_SelectedPrefab.contentFilePath.Count; i++)
                 {
                     SVNToolFile file = m_SelectedPrefab.contentFilePath[i];
+                    if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW && !file.CanBeCommit)
+                        continue;
+                    
                     EditorGUILayout.BeginHorizontal(GUI.skin.box);
                     {
+                        // 编辑模式
                         if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
                         {
-                            EditorGUILayout.LabelField("【 文 件 】\t" + file.path, GUILayout.Width(m_RightPathTextLength));
+                            EditorGUILayout.LabelField("【 文 件 】\t" + file.name, GUILayout.Width(m_RightPathTextLength));
                             GUILayout.FlexibleSpace();
                             if (GUILayout.Button("Del", GUILayout.Width(30)))
                             {
                                 m_SelectedPrefab.contentFilePath.Remove(file);
                             }
                         }
+                        // 浏览模式
                         else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
                             // 浏览模式 - 仅展示需同步文件
-                            EditorGUILayout.LabelField(file.path, GUILayout.MinWidth(m_RightPathTextLength));
+                            if (file.GetSVNToolFileCurrentSyncState() == EnumSVNToolFileNeedSyncState.SELECTED_NEED_COMMIT)
+                                SetSVNToolFileCanBeCommitColor();
+                            else if (file.GetSVNToolFileCurrentSyncState() == EnumSVNToolFileNeedSyncState.NEED_COMMIT_WITHOUT_SEELCTED)
+                                SetSVNToolFileNeedSelectedColor();
+
+                            file.ifSelected = GUILayout.Toggle(file.ifSelected, "是否提交", GUILayout.Width(60));
+                            EditorGUILayout.LabelField(file.name, GUILayout.MinWidth(m_RightPathTextLength));
                             GUILayout.FlexibleSpace();
-                            if (GUILayout.Button("查看更新", GUILayout.Width(70)))
+                            
+                            GUI.enabled = !CheckIfSelectedPrefabSyncing();
+                            if (GUILayout.Button("查看差异", GUILayout.Width(70)))
                             {
-                                Debug.Log(file.path);
-//                                UESvnOperation.GetSvnOperation().DiffFile(file.path);
-//                                file.RefreshSVNToolFileNeedSyncState();
-                                SVNToolUtil.GetSVNToolObjStateJobHandle(m_SelectedPrefab.contentFolderPath, m_SelectedPrefab.contentFilePath);
+                                UESvnOperation.GetSvnOperation().DiffFile(file.path);
                             }
+                            GUI.enabled = true;
+
+                            SetDefaultSVNToolBackgroundColor();
                         }
                     }
                     EditorGUILayout.EndHorizontal();
@@ -372,7 +408,9 @@ public sealed class SVNToolWindow : EditorWindow
     }
 
     #endregion
-    
+
+    #region 颜色设定
+
     // 设定回归默认颜色
     private void SetDefaultSVNToolBackgroundColor()
     {
@@ -380,16 +418,36 @@ public sealed class SVNToolWindow : EditorWindow
         GUI.backgroundColor = new Color(222, 222, 222);
     }
     
-    // 设定选中颜色
+    // 设定预设选中颜色
     private void SetOnSelectedBackgroundColor()
     {
         GUI.backgroundColor = Color.gray * 1.8f;
     }
     
+    // 设定文件可同步的颜色 
+    private void SetSVNToolFileNeedSelectedColor()
+    {
+        GUI.backgroundColor = Color.red;
+    }
+    
+    // 设定文件需要选择的颜色
+    private void SetSVNToolFileCanBeCommitColor()
+    {
+        GUI.backgroundColor = Color.green;
+    }
+    
+    #endregion
+    
     // 设定是否可操作
     private Boolean SetIfCurrentActionEnableBySelected()
     {
         return null != m_SelectedPrefab;
+    }
+    
+    // 获取是否在更新中
+    private Boolean CheckIfSelectedPrefabSyncing()
+    {
+        return SVNToolUtil.Syncing;
     }
 
     // 添加路径到当前选择中
@@ -400,7 +458,7 @@ public sealed class SVNToolWindow : EditorWindow
             return false;
         }
         
-        // TODO 待开启
+        // TODO 检查是否为本项目工程 - 待开启
 //        for (int i = 0; i < paths.Length; i++)
 //        {
 //            if (!DragAndDrop.paths[i].StartsWith("Assets"))
@@ -425,5 +483,23 @@ public sealed class SVNToolWindow : EditorWindow
         File.WriteAllText(filePath, JsonUtility.ToJson(_prefabWrap));
 
         m_CurrentEditState = EnumSVNToolWindowEditState.VIEW;
+    }
+    
+    // 设定选中的预设
+    private void SelectCurrentSVNToolPrefab(SVNToolPrefab prefab)
+    {
+        m_SelectedPrefab = prefab;
+        // 点击查看后检查是否可更新状态
+        if (null != m_SelectedPrefab && !m_SelectedPrefab.initedFileStatus)
+        {
+            DoSyncSVNToolPrefabStatus(m_SelectedPrefab);
+        }
+    }
+    
+    // 更新预设中文件状态
+    private void DoSyncSVNToolPrefabStatus(SVNToolPrefab prefab)
+    {
+        SVNToolUtil.GetSVNToolObjStateJobHandle(prefab);
+        prefab.initedFileStatus = true;    // 设定prefab的初始化状态
     }
 }

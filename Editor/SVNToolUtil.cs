@@ -3,32 +3,102 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using Editor;
 using UnityEngine;
+using Object = System.Object;
 
-public class SVNToolUtil
+public static class SVNToolUtil
 {
     public static Boolean Syncing = false;
     private static List<SVNToolFolder> folders = new List<SVNToolFolder>();
     private static List<SVNToolFile> files = new List<SVNToolFile>();
+    private static readonly Object lockObj = new object();
     
-    public static void GetSVNToolObjStateJobHandle(List<SVNToolFolder> folders, List<SVNToolFile> files)
+    /// <summary>
+    /// 利用多线程更新一个Prefab
+    /// </summary>
+    /// <param name="prefab"></param>
+    public static void GetSVNToolObjStateJobHandle(SVNToolPrefab prefab)
     {
-        SVNToolUtil.files = files;
-        SVNToolUtil.folders = folders;
+        files = prefab.contentFilePath;
+        folders = prefab.contentFolderPath;
         
-        ThreadStart childRef = new ThreadStart(GetSVNToolObjStateJob);
-        Thread childThread = new Thread(childRef);
-        childThread.Start();
+        // 同步文件
+        ThreadStart fileSyncJob = GetSVNToolObjStateJob;
+        Thread fileThread = new Thread(fileSyncJob);
+        fileThread.Start();
+        
+        // 同步文件夹
+        ThreadStart folderSyncJob = GetSVNToolFolderStateJob;
+        Thread folderThread = new Thread(folderSyncJob);
+        folderThread.Start();
     }
 
+    /// <summary>
+    /// 获取文件同步状态
+    /// </summary>
     private static void GetSVNToolObjStateJob()
     {
-        Syncing = true;
-        foreach (SVNToolFile file in files)
+        lock (lockObj)
         {
-            Boolean ifCanSync = UESvnOperation.GetSvnOperation().Status(file.path);
-            Debug.Log(ifCanSync);
+            Syncing = true;
+            foreach (SVNToolFile file in files)
+            {
+                file.CanBeCommit = GetSVNToolFileStateJob(file.path);
+            }
+            Syncing = false;
         }
-        Syncing = false;
+    }
+
+    /// <summary>
+    /// 获取文件夹状态
+    /// </summary>
+    private static void GetSVNToolFolderStateJob()
+    {
+        lock (lockObj)
+        {
+            Syncing = true;
+            foreach (SVNToolFolder folder in folders)
+            {
+                folder.contentNeedSyncFiles = GetNeedCommitSVNToolFileList(folder.path);
+            }
+            Syncing = false;
+        }
+    }
+
+    /// <summary>
+    /// 检查路径下文件/文件夹是否可被Commit
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    private static Boolean GetSVNToolFileStateJob(String path)
+    {
+        return UESvnOperation.GetSvnOperation().FileStatus(path);
+    }
+
+    /// <summary>
+    /// 获取文件夹路径下所有可提交的文件
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    private static List<SVNToolFile> GetNeedCommitSVNToolFileList(String path)
+    {
+        List<SVNToolFile> res = new List<SVNToolFile>();
+        String commandRes = UESvnOperation.GetSvnOperation().FolderStatus(path);
+        if (String.IsNullOrEmpty(commandRes))
+        {
+            return null;
+        }
+
+        // 拆解SVN结果
+        String[] resList = commandRes.Split('\n');
+        foreach (string s in resList)
+        {
+            if (s.Length > 8) {
+                res.Add(new SVNToolFile(s.Substring(8)));
+            }
+        }
+        
+        return res;
     }
 }
