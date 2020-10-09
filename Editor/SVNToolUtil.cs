@@ -3,14 +3,11 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
 using Object = System.Object;
 
 public static class SVNToolUtil
 {
     public static Boolean Syncing = false;
-//    private static List<SVNToolFolder> folders = new List<SVNToolFolder>();
-//    private static List<SVNToolFile> files = new List<SVNToolFile>();
 
     public static readonly Object lockObj = new object();
     
@@ -94,7 +91,7 @@ public class SVNToolThreadWithState
             {
                 GetSVNToolObjStateJob(prefab);
                 GetSVNToolFolderStateJob(prefab);
-                prefab.initedFileStatus = true;
+                prefab.FinishSVNToolPrefabSyncSVNStatus();
             }
             
             SVNToolUtil.Syncing = false;
@@ -111,6 +108,8 @@ public class SVNToolThreadWithState
         {
             SVNToolFile file = files[i];
             file.CanBeCommit = SVNToolUtil.GetSVNToolFileStateJob(file.path);
+            // 获取文件的svn url
+            file.SyncFileSVNURL();
         }
     }
 

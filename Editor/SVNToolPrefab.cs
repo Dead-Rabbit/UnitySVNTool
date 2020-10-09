@@ -82,6 +82,28 @@ public sealed class SVNToolPrefab
 	}
 
 	/// <summary>
+	/// 当完成SVN状态获取后调用
+	/// </summary>
+	public void FinishSVNToolPrefabSyncSVNStatus()
+	{
+		initedFileStatus = true;
+		// 如果文件夹中的文件在本地缓存中，则设置为缓存的勾选状态
+		foreach (SVNToolFolder folder in contentFolderPath)
+		{
+			foreach (SVNToolFile file in folder.contentNeedSyncFiles)
+			{
+				foreach (SVNToolFile prefabFile in contentFilePath)
+				{
+					if (prefabFile.path.Equals(file.path))
+					{
+						file.ifSelected = prefabFile.ifSelected;
+					}
+				}
+			}
+		}
+	}
+
+	/// <summary>
 	/// 添加路径至配置中
 	/// </summary>
 	/// <param name="path"></param>

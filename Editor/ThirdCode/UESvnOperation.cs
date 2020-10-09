@@ -231,8 +231,6 @@ public class UESvnOperation
         commandline += GetAuthenCmd();
         ProcessCommand(commandline);
         
-        Debug.Log(OutputResult);
-
         if (string.IsNullOrEmpty(OutputResult))
         {
             return true;
@@ -267,6 +265,11 @@ public class UESvnOperation
         return true;
     }
     
+    /// <summary>
+    /// 获取文件夹下的svn状态(获取文件夹下可提交的文件)
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
     public String FolderStatus(string path = "")
     {
         if (!Initialized)
@@ -277,10 +280,10 @@ public class UESvnOperation
             return null;
         }
 
-        string commandline;
         String output = "";
-        commandline = string.Format(" status {0}", path);
+        string commandline = string.Format(" status {0}", path);
         commandline += GetAuthenCmd();
+        
         ProcessCommandShowOutput(commandline, out output);
         
         if (String.IsNullOrEmpty(output))
@@ -289,6 +292,45 @@ public class UESvnOperation
         }
 
         return output;
+    }
+    
+    /// <summary>
+    /// 获取文件在SVN中的相对路径
+    /// </summary>
+    /// <param name="paths"></param>
+    /// <returns></returns>
+    public String ShowFileUrl(String path)
+    {
+        if (!Initialized)
+            return null;
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        String output = "";
+        string commandline = string.Format(" info {0} ", path);
+        commandline += GetAuthenCmd();
+        
+        ProcessCommandShowOutput(commandline, out output);
+        
+        if (String.IsNullOrEmpty(output))
+        {
+            return null;
+        }
+
+        String beginStr = "Relative URL: ^";
+        StringBuilder resultBuilder = new StringBuilder();
+        foreach (string s in output.Split('\n'))
+        {
+            if (s.StartsWith(beginStr))
+            {
+                resultBuilder.AppendLine(s.Substring(beginStr.Length));
+            }
+        }
+
+        return resultBuilder.ToString();
     }
 
     public bool StatusShowLog(out string StandLog, string path = "")
@@ -482,24 +524,6 @@ public class UESvnOperation
 
         return true;
     }
-
-	//slow function
-    //public bool Add(string path = "")
-    //{
-    //    if (!Initialized)
-    //        return false;
-
-    //    string commandline = string.Empty;
-    //    if (!string.IsNullOrEmpty(path))
-    //    {
-    //        commandline = string.Format(" add \"{0}\" * --force", path);
-    //    }
-
-    //    commandline += GetAuthenCmd();
-    //    ProcessCommand(commandline);
-
-    //    return true;
-    //}
 
     public bool AddFile(string path = "")
     {
@@ -695,6 +719,7 @@ public class UESvnOperation
         p.StartInfo.RedirectStandardOutput = bUseStandOut;
         p.StartInfo.CreateNoWindow = false;
         p.EnableRaisingEvents = true;
+
         if (p.Start())
         {
             strs = p.StandardError.ReadToEnd();
@@ -702,9 +727,8 @@ public class UESvnOperation
             {
                 p.StandardOutput.ReadToEnd();
             }
-                
         }
-
+        
         p.WaitForExit();
         p.Close();
 
@@ -723,7 +747,9 @@ public class UESvnOperation
         p.StartInfo.RedirectStandardOutput = true;
         p.StartInfo.CreateNoWindow = true;
         p.EnableRaisingEvents = true;
-
+        
+//        Debug.Log(p.);
+        
         if (p.Start())
         {
             StandardOutput = p.StandardOutput.ReadToEnd();
@@ -747,7 +773,6 @@ public class UESvnOperation
     {
         string commandline = string.Format("/c TortoiseProc.exe /command:lock /path:\"{0}\" /closeonend:2", path);
         string log = ProcessCommand(commandline, "cmd.exe");
-        UnityEngine.Debug.Log("lock file: " + log);
     }
 
     public void UnLockFile(string path)

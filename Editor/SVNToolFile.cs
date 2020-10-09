@@ -4,7 +4,6 @@
 
 using System;
 using Editor;
-using UnityEngine;
 
 [Serializable]
 public class SVNToolFile : SVNToolObj
@@ -14,10 +13,25 @@ public class SVNToolFile : SVNToolObj
     [NonSerialized] public Boolean CanBeCommit = false;
 
     public Boolean ifSelected = true;    // 是否被选中
+
+    public String svnURL = "";
     
     public SVNToolFile(String path) : base(path)
     {
-        this.path = path;
+        this.path = path.Trim();
+    }
+
+    public void SyncFileSVNURL(String url = "")
+    {
+        if (String.IsNullOrEmpty(url))
+        {
+            // 获取SVN中URL的路径
+            svnURL = UESvnOperation.GetSvnOperation().ShowFileUrl(path).Trim();
+        }
+        else
+        {
+            svnURL = url.Trim();
+        }
     }
 
     public EnumSVNToolFileNeedSyncState GetSVNToolFileCurrentSyncState()

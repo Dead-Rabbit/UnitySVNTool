@@ -4,6 +4,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Editor;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ public class SVNToolFolder : SVNToolObj
     
     public SVNToolFolder(String path) : base(path)
     {
-        this.path = path;
+        this.path = path.Trim();
     }
 
     public void InitSVNToolFolder()
@@ -26,12 +27,25 @@ public class SVNToolFolder : SVNToolObj
         openFolder = true;
     }
 
+    /// <summary>
+    /// 设置文件夹下所有的可提交的文件
+    /// </summary>
+    /// <param name="files"></param>
     public void SetSVNToolFolderNeedSyncFiles(List<SVNToolFile> files)
     {
         contentNeedSyncFiles = files;
+        
+        StringBuilder stringBuilder = new StringBuilder();
         foreach (SVNToolFile file in contentNeedSyncFiles)
         {
             file.CanBeCommit = true;
+            stringBuilder.Append(file.path).Append(" ");
+        }
+        
+        String[] resultFilesInfo = UESvnOperation.GetSvnOperation().ShowFileUrl(stringBuilder.ToString()).Split('\n');
+        for (Int32 i = 0; i < contentNeedSyncFiles.Count; i++)
+        {
+            contentNeedSyncFiles[i].SyncFileSVNURL(resultFilesInfo[i]);
         }
     }
     
