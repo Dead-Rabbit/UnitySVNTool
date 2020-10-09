@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Editor;
-using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 
@@ -112,10 +111,20 @@ public sealed class SVNToolWindow : EditorWindow
             Debug.Log(dataAsJson);
             _prefabWrap = JsonUtility.FromJson<SVNToolPrefabWrap>(dataAsJson);
             storedPrefabs = _prefabWrap.prefabs;
+            
+            // 初始同步内容
+            List<SVNToolPrefab> initPrefabs = new List<SVNToolPrefab>();
             foreach (SVNToolPrefab prefab in storedPrefabs)
             {
+                // Prefab 初始化
                 prefab.InitSVNToolPrefabFileAndFolderInfo();
+                // 同步Prefab的内容
+                if (prefab.ifSelected)
+                {
+                    initPrefabs.Add(prefab);
+                }
             }
+            InitSyncSVNToolPrefabStatus(initPrefabs);
             
             // 设定默认选择
             if (null == m_SelectedPrefab && storedPrefabs.Count > 0)
@@ -226,7 +235,8 @@ public sealed class SVNToolWindow : EditorWindow
                     }
                     if (GUILayout.Button("查看", GUILayout.Width(40)))
                     {
-                        DoSyncSVNToolPrefabStatus(currentPrefab);
+//                        DoSyncSVNToolPrefabStatus(currentPrefab);
+                        SelectCurrentSVNToolPrefab(currentPrefab);
                     }
                 }
                 
@@ -265,6 +275,7 @@ public sealed class SVNToolWindow : EditorWindow
             GUI.enabled = !CheckIfSelectedPrefabSyncing();
             if (GUILayout.Button("刷新同步"))
             {
+                m_SelectedPrefab.initedFileStatus = false;
                 DoSyncSVNToolPrefabStatus(m_SelectedPrefab);
             }
 
@@ -311,6 +322,8 @@ public sealed class SVNToolWindow : EditorWindow
                                         SetSVNToolFolderSelectedParyColor();
 
                                     Int32 selectedFolderFileCount = folder.GetTotalSelectedSVNToolFiles().Count;
+                                    
+                                    GUI.enabled = folder.contentNeedSyncFiles.Count > 0;
                                     if (GUILayout.Button(selectedFolderFileCount == 0 ? "全选" : "取消选择", GUILayout.Width(60)))
                                     {
                                         // 全选
@@ -321,6 +334,8 @@ public sealed class SVNToolWindow : EditorWindow
                                             foreach (SVNToolFile file in folder.contentNeedSyncFiles)
                                                 file.ifSelected = false;
                                     }
+                                    GUI.enabled = true;
+                                    
                                     EditorGUILayout.LabelField("已选 " + selectedFolderFileCount + "/" + folder.contentNeedSyncFiles.Count, GUILayout.Width(70));
                                     SetDefaultSVNToolBackgroundColor();
                                     folder.openFolder = EditorGUILayout.Foldout(folder.openFolder, folder.name, true);
@@ -433,6 +448,7 @@ public sealed class SVNToolWindow : EditorWindow
             EditorGUILayout.EndVertical();
             
         } else {
+            // TODO 刷新值修改为 - 当做了选择后进行的刷新
             RefreshAllSelectedSVNToolFiles();    // 刷新值
 
             #region 未选择结果列表
@@ -470,7 +486,8 @@ public sealed class SVNToolWindow : EditorWindow
 
         #region 操作组
 
-        GUI.enabled = m_CurrentEditState != EnumSVNToolWindowEditState.EDIT;
+        // 控制提交按钮的可控
+        GUI.enabled = m_CurrentEditState != EnumSVNToolWindowEditState.EDIT && !CheckIfSelectedPrefabSyncing();
         
         EditorGUILayout.BeginHorizontal();
         {
@@ -647,17 +664,24 @@ public sealed class SVNToolWindow : EditorWindow
     {
         m_SelectedPrefab = prefab;
         // 点击查看后检查是否可更新状态
-        if (null != m_SelectedPrefab && !m_SelectedPrefab.initedFileStatus)
-        {
-            DoSyncSVNToolPrefabStatus(m_SelectedPrefab);
-        }
+        DoSyncSVNToolPrefabStatus(m_SelectedPrefab);
     }
     
     // 更新预设中文件状态
     private void DoSyncSVNToolPrefabStatus(SVNToolPrefab prefab)
     {
-        SVNToolUtil.GetSVNToolObjStateJobHandle(prefab);
-        prefab.initedFileStatus = true;    // 设定prefab的初始化状态
+        if (null != prefab && !prefab.initedFileStatus)
+        {
+            SVNToolUtil.GetSVNToolObjStateJobHandle(prefab);
+        }
+    }
+
+    private void InitSyncSVNToolPrefabStatus(List<SVNToolPrefab> prefabs)
+    {
+        if (null != prefabs && prefabs.Count > 0)
+        {
+            SVNToolUtil.GetSVNToolObjStateJobHandle(prefabs);
+        }
     }
 
     // 获取所有当前选择的文件路径

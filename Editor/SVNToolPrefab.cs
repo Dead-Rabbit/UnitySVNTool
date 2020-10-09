@@ -38,7 +38,7 @@ public sealed class SVNToolPrefab
 
 	[NonSerialized] public Int32 differentCount = 0;	// 当前需要同步的文件数量
 	[NonSerialized] public Int32 totalCount = 0;	// 总共的文件数量
-	[NonSerialized] public Boolean initedFileStatus = false;
+	[NonSerialized] public Boolean initedFileStatus = false;	// 判断是否初始化过
 	public Boolean ifSelected = true;
 
 	public SVNToolPrefab()
@@ -69,7 +69,6 @@ public sealed class SVNToolPrefab
 	/// </summary>
 	public void InitSVNToolPrefabFileAndFolderInfo()
 	{
-		Debug.Log("Init prefab");
 		foreach (SVNToolFile file in contentFilePath)
 		{
 			file.name = file.path.Substring(file.path.LastIndexOf("/") + 1);
