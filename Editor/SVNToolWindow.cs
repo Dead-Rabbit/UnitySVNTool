@@ -798,6 +798,9 @@ public sealed class SVNToolWindow : EditorWindow
 
             foreach (SVNToolFile file in prefab.contentFilePath)
             {
+                if (!file.CanBeCommit)
+                    continue;
+                
                 if (file.ifSelected)
                 {
                     AddSVNToolFileIntoShowResult(file);
