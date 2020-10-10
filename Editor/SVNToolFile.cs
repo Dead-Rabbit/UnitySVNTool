@@ -3,7 +3,6 @@
 // AUTHOR:    WangZixiao
 
 using System;
-using Editor;
 
 [Serializable]
 public class SVNToolFile : SVNToolObj

@@ -5,8 +5,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Editor;
-using UnityEngine;
 
 [Serializable]
 public class SVNToolFolder : SVNToolObj
@@ -35,6 +33,9 @@ public class SVNToolFolder : SVNToolObj
     {
         contentNeedSyncFiles = files;
         
+        if (files.Count == 0)
+            return;
+
         StringBuilder stringBuilder = new StringBuilder();
         foreach (SVNToolFile file in contentNeedSyncFiles)
         {
