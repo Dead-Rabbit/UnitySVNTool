@@ -232,7 +232,14 @@ public sealed class SVNToolWindow : EditorWindow
                     }
                     
                     // 预设名
-                    currentPrefab.name = EditorGUILayout.TextField(currentPrefab.name, GUILayout.Width(120));
+                    if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
+                    {
+                        currentPrefab.name = EditorGUILayout.TextField(currentPrefab.name, GUILayout.Width(120));
+                    } else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW)
+                    {
+                        EditorGUILayout.LabelField(currentPrefab.name, GUILayout.Width(120));
+                    }
+                    
                     if (ifChanged)
                     {
                         GUI.FocusControl("zero");
@@ -323,12 +330,17 @@ public sealed class SVNToolWindow : EditorWindow
                                 else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
                                     
                                     GUI.enabled = folder.contentNeedSyncFiles.Count > 0;
-                                    SetSVNToolFolderSelectedParyColor();
-                                    if (GUILayout.Button("存在新建，以及文件夹操作，请点击此处", GUILayout.Width(220)))
+                                    if (folder.existNewFileOrFolder)
                                     {
-                                        UESvnOperation.GetSvnOperation().CommitFile(folder.path);
+                                        SetSVNToolFolderSelectedParyColor();
+                                        if (GUILayout.Button("存在新建，以及文件夹操作，请点击此处", GUILayout.Width(220)))
+                                        {
+                                            UESvnOperation.GetSvnOperation().CommitFile(folder.path);
+                                            Debug.Log("finish commit");
+                                            InitSyncSVNToolPrefabStatus();
+                                        }
+                                        SetDefaultSVNToolBackgroundColor();
                                     }
-                                    SetDefaultSVNToolBackgroundColor();
 
                                     // 浏览模式 - 仅展示需同步文件
                                     if (folder.GetSVNToolFileCurrentSyncState() == EnumSVNToolFolderNeedSyncState.SELECTED_ALL)
@@ -578,16 +590,18 @@ public sealed class SVNToolWindow : EditorWindow
         EditorGUILayout.LabelField(file.name, GUILayout.MinWidth(m_RightPathTextLength));
         GUILayout.FlexibleSpace();
                             
-//        GUI.enabled = !CheckIfSelectedPrefabSyncing();
+        if (GUILayout.Button("Find", GUILayout.Width(40)))
+        {
+            UESvnOperation.GetSvnOperation().ShowFileInExplorer(file.path);
+        }
         if (GUILayout.Button("完整路径", GUILayout.Width(70)))
         {
-            ShowNotification(new GUIContent(file.path));
+            ShowNotification(new GUIContent(file.svnURL));
         }
         if (GUILayout.Button("查看差异", GUILayout.Width(70)))
         {
             UESvnOperation.GetSvnOperation().DiffFile(file.path);
         }
-//        GUI.enabled = true;
 
         SetDefaultSVNToolBackgroundColor();
     }

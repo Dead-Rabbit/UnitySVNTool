@@ -798,6 +798,13 @@ public class UESvnOperation
         string commandline = string.Format("/c TortoiseProc.exe /command:diff /path:\"{0}\" /closeonend:0", path);
         ProcessCommand(commandline, "cmd.exe");
     }
+
+    public void ShowFileInExplorer(string path)
+    {
+        string commandline = string.Format("/c Explorer /select, {0}", path.Replace('/', '\\'));
+        Debug.Log(commandline);
+        ProcessCommand(commandline, "cmd.exe");
+    }
     
     public string GetSVNPathByPath(string path)
     {

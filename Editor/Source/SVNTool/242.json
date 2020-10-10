@@ -1,1 +1,1 @@
-{"val":10,"prefabs":[{"ID":1,"name":"HostUser","order":0,"isGlobal":false,"contentFolderPath":[{"path":"C:/Users/Jack/Documents/MGame/MGame_Trunk/MProject/Assets/LuaFramework/Lua","name":"Lua"}],"contentFilePath":[],"ifSelected":true}]}
+{"val":10,"prefabs":[{"ID":1,"name":"Global","order":0,"isGlobal":false,"contentFolderPath":[{"path":"C:/Users/Jack/Documents/MGame/MGame_Trunk/MProject/Assets/LuaFramework/Lua","name":"Lua"}],"contentFilePath":[],"ifSelected":true}]}

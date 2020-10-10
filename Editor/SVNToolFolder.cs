@@ -4,9 +4,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
-using UnityEngine;
 
 [Serializable]
 public class SVNToolFolder : SVNToolObj
@@ -44,22 +42,22 @@ public class SVNToolFolder : SVNToolObj
         List<SVNToolFile> newFiles = new List<SVNToolFile>();
         List<SVNToolFolder> newFolders = new List<SVNToolFolder>();
 
+        existNewFileOrFolder = false;
+
         // 判断路径是文件还是文件夹
         foreach (SVNToolPath toolPath in paths)
         {
             if (toolPath.pathType == EnumSVNToolPathType.NO_CONTROL)
             {
-                Debug.Log("路径被过滤:" + toolPath.path);
                 existNewFileOrFolder = true;
                 continue;
             }
             
             String s = toolPath.path;
             if (s.IndexOf('.', s.LastIndexOf('/')) > -1) {
-                Debug.Log("file: " + s);
                 newFiles.Add(new SVNToolFile(s));
             } else {
-                Debug.Log("folder: " + s);
+                existNewFileOrFolder = true;
                 newFolders.Add(new SVNToolFolder(s));
             }
         }
