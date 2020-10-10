@@ -84,12 +84,12 @@ public sealed class SVNToolWindow : EditorWindow
 
     private void GUISVNToolOperation()
     {
-        filePath = String.Concat(Application.dataPath, m_SVNToolSourcePath, m_SvnToolUserID, ".json");
-
         // 判断是否读取存储的配置数据
         if (!m_FinishReadData)
         {
+            filePath = String.Concat(Application.dataPath, m_SVNToolSourcePath, m_SvnToolUserID, ".json");
             ReadSVNToolPrefabsFromJson(filePath);
+            m_CurrentEditState = EnumSVNToolWindowEditState.VIEW;
             m_FinishReadData = true;
         }
 
@@ -159,9 +159,16 @@ public sealed class SVNToolWindow : EditorWindow
         GUILayout.FlexibleSpace();
         if (m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
         {
+            if (GUILayout.Button("注销", GUILayout.Width(50)))
+            {
+                PlayerPrefs.DeleteKey(SVN_TOOL_USER_ID_PREF_NAME);
+                m_SvnToolUserID = null;
+                m_FinishReadData = false;
+            }
+            
             if (GUILayout.Button("新增", GUILayout.Width(50)))
             {
-                Int32 largeID = 0;
+                Int32 largeID = 1;
                 // 拿到最大的ID
                 foreach (SVNToolPrefab storedPrefab in storedPrefabs)
                 {
@@ -548,13 +555,12 @@ public sealed class SVNToolWindow : EditorWindow
         GUILayout.Label("请输入工号", EditorStyles.boldLabel);
         GUILayout.BeginHorizontal();
         m_InputSvnToolUserID = EditorGUILayout.TextField("用户工号", m_InputSvnToolUserID);
-        // TODO 添加针对工号的解释
         if (GUILayout.Button("确定", GUILayout.Width(70f)))
         {
             if ("" != m_InputSvnToolUserID)
             {
                 m_SvnToolUserID = m_InputSvnToolUserID;
-                PlayerPrefs.SetString(SVN_TOOL_USER_ID_PREF_NAME, "242");
+                PlayerPrefs.SetString(SVN_TOOL_USER_ID_PREF_NAME, m_InputSvnToolUserID);
             }
             else
             {
