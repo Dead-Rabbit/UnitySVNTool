@@ -85,7 +85,7 @@ public class SVNToolExecuteWindow : EditorWindow
                 }
             }
         }
-
+        UESvnOperation.GetSvnOperation().ShowCommitLog(Application.dataPath);
         Close();
     }
 }
