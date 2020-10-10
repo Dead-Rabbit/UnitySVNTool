@@ -48,7 +48,7 @@ public sealed class SVNToolWindow : EditorWindow
     
     #endregion
 
-    [MenuItem("SVN/SVN同步工具")]
+    [MenuItem("SVN/SVN同步工具 #&M")]
     public static void ShowWindow()
     {
         GetWindow(typeof(SVNToolWindow));
@@ -232,12 +232,10 @@ public sealed class SVNToolWindow : EditorWindow
                     }
                     
                     // 预设名
-                    String controlName = "FocusControl_Prefab_Name" + currentPrefab.ID;
-                    GUI.SetNextControlName(controlName);
                     currentPrefab.name = EditorGUILayout.TextField(currentPrefab.name, GUILayout.Width(120));
                     if (ifChanged)
                     {
-                        GUI.FocusControl(controlName);
+                        GUI.FocusControl("zero");
                     }
 
                     GUILayout.FlexibleSpace();
@@ -323,6 +321,15 @@ public sealed class SVNToolWindow : EditorWindow
                                     }
                                 }
                                 else if (m_CurrentEditState == EnumSVNToolWindowEditState.VIEW) {
+                                    
+                                    GUI.enabled = folder.contentNeedSyncFiles.Count > 0;
+                                    SetSVNToolFolderSelectedParyColor();
+                                    if (GUILayout.Button("存在新建，以及文件夹操作，请点击此处", GUILayout.Width(220)))
+                                    {
+                                        UESvnOperation.GetSvnOperation().CommitFile(folder.path);
+                                    }
+                                    SetDefaultSVNToolBackgroundColor();
+
                                     // 浏览模式 - 仅展示需同步文件
                                     if (folder.GetSVNToolFileCurrentSyncState() == EnumSVNToolFolderNeedSyncState.SELECTED_ALL)
                                         SetSVNToolFileCanBeCommitColor();
@@ -331,7 +338,6 @@ public sealed class SVNToolWindow : EditorWindow
 
                                     Int32 selectedFolderFileCount = folder.GetTotalSelectedSVNToolFiles().Count;
                                     
-                                    GUI.enabled = folder.contentNeedSyncFiles.Count > 0;
                                     if (GUILayout.Button(selectedFolderFileCount == 0 ? "全选" : "取消选择", GUILayout.Width(60)))
                                     {
                                         // 全选
@@ -343,6 +349,7 @@ public sealed class SVNToolWindow : EditorWindow
                                                 file.ifSelected = false;
                                         
                                         ifChooseDataDirty = true;
+                                        GUI.FocusControl("zero");    // 取消聚焦，防止选中“当前已选择”后不刷新
                                     }
                                     GUI.enabled = true;
                                     
@@ -564,7 +571,8 @@ public sealed class SVNToolWindow : EditorWindow
         {
             ifChooseDataDirty = true;
             OnChangeSelectSVNToolFile(file);
-            SaveSVNToolPrefabs();        // 保存配置
+            SaveSVNToolPrefabs();               // 保存配置
+            GUI.FocusControl("zero");    // 取消聚焦，防止选中“当前已选择”后不刷新
         }
         
         EditorGUILayout.LabelField(file.name, GUILayout.MinWidth(m_RightPathTextLength));

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using Object = System.Object;
 
 public static class SVNToolUtil
@@ -46,9 +47,9 @@ public static class SVNToolUtil
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    public static List<String> GetNeedCommitSVNToolFileList(String path)
+    public static List<SVNToolPath> GetNeedCommitSVNToolFileList(String path)
     {
-        List<String> res = new List<String>();
+        List<SVNToolPath> res = new List<SVNToolPath>();
         String commandRes = UESvnOperation.GetSvnOperation().FolderStatus(path);
         if (String.IsNullOrEmpty(commandRes))
         {
@@ -60,14 +61,17 @@ public static class SVNToolUtil
         foreach (string s in resList)
         {
             // 如果字符串中的数据为修改后的
-            // NOTE: 当前展示的内容为一下，当前排除文件/文件夹的 创建、删除
-            if (s.Length > 8 && (
-                s.StartsWith("M ")       // 内容发生修改
-                || s.StartsWith("C ")    // 发生冲突
-                || s.StartsWith("A ")    // 预订加入到版本库
-                || s.StartsWith("K ")    // 被锁定
-                )) {
-                res.Add(s.Substring(8).Replace('\\', '/').Trim());
+            if (s.Length > 8)
+            {
+                EnumSVNToolPathType pathType = EnumSVNToolPathType.NO_CONTROL;
+                if (s.StartsWith("?")) {
+                    pathType = EnumSVNToolPathType.NO_CONTROL;
+                } else if (s.StartsWith("!")) {
+                    pathType = EnumSVNToolPathType.DEL;
+                } else {
+                    pathType = EnumSVNToolPathType.MODIFY;
+                }
+                res.Add(new SVNToolPath(s.Substring(8).Replace('\\', '/').Trim(), pathType));
             }
         }
         

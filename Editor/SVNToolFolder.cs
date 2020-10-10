@@ -6,19 +6,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using NUnit.Framework;
 using UnityEngine;
 
 [Serializable]
 public class SVNToolFolder : SVNToolObj
 {
     // 当前文件夹下所需同步的文件夹
-    
+    [NonSerialized] public List<SVNToolFolder> contentNeedSyncFolders = new List<SVNToolFolder>();
     
     // 当前文件夹下所需同步的文件
     [NonSerialized] public List<SVNToolFile> contentNeedSyncFiles = new List<SVNToolFile>();
     
     [NonSerialized] public Boolean openFolder = true;
+
+    [NonSerialized] public Boolean existNewFileOrFolder;
     
     public SVNToolFolder(String path) : base(path)
     {
@@ -35,7 +36,7 @@ public class SVNToolFolder : SVNToolObj
     /// 设置文件夹下所有的可提交的文件
     /// </summary>
     /// <param name="files"></param>
-    public void SetSVNToolFolderNeedSyncFoldersAndFiles(List<String> paths)
+    public void SetSVNToolFolderNeedSyncFoldersAndFiles(List<SVNToolPath> paths)
     {
         if (paths.Count == 0)
             return;
@@ -44,20 +45,27 @@ public class SVNToolFolder : SVNToolObj
         List<SVNToolFolder> newFolders = new List<SVNToolFolder>();
 
         // 判断路径是文件还是文件夹
-        foreach (string s in paths)
+        foreach (SVNToolPath toolPath in paths)
         {
-            if (Directory.Exists(s))
+            if (toolPath.pathType == EnumSVNToolPathType.NO_CONTROL)
             {
-                Debug.Log("directory " + s);
-                newFolders.Add(new SVNToolFolder(s));
-            } else if (File.Exists(s))
-            {
-                Debug.Log("file " + s);
+                Debug.Log("路径被过滤:" + toolPath.path);
+                existNewFileOrFolder = true;
+                continue;
+            }
+            
+            String s = toolPath.path;
+            if (s.IndexOf('.', s.LastIndexOf('/')) > -1) {
+                Debug.Log("file: " + s);
                 newFiles.Add(new SVNToolFile(s));
+            } else {
+                Debug.Log("folder: " + s);
+                newFolders.Add(new SVNToolFolder(s));
             }
         }
 
         contentNeedSyncFiles = newFiles;
+        contentNeedSyncFolders = newFolders;
         
         if (contentNeedSyncFiles.Count > 0) 
         {
@@ -115,5 +123,18 @@ public class SVNToolFolder : SVNToolObj
         }
         
         return EnumSVNToolFolderNeedSyncState.NONE;
+    }
+}
+
+public class SVNToolPath
+{
+    public String path;
+
+    public EnumSVNToolPathType pathType;
+    
+    public SVNToolPath(String path, EnumSVNToolPathType pathType)
+    {
+        this.path = path;
+        this.pathType = pathType;
     }
 }

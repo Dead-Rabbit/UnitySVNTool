@@ -20,3 +20,11 @@ public enum EnumSVNToolFolderNeedSyncState
     SELECTED_ALL,    // 存在可提交，已全选
     SELECTED_PART,    // 存在可提交，未全选
 }
+
+// 路径类型
+public enum EnumSVNToolPathType
+{
+    NO_CONTROL,
+    DEL,
+    MODIFY,
+}
