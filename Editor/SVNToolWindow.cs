@@ -229,6 +229,9 @@ public sealed class SVNToolWindow : EditorWindow
                         // 刷新已选Data
                         ifChooseDataDirty = true;
                         ifChanged = true;
+                        
+                        if (currentPrefab.ifSelected) 
+                            DoSyncSVNToolPrefabStatus(currentPrefab, false);
                     }
                     
                     // 预设名
@@ -704,9 +707,9 @@ public sealed class SVNToolWindow : EditorWindow
     }
     
     // 更新预设中文件状态
-    private void DoSyncSVNToolPrefabStatus(SVNToolPrefab prefab)
+    private void DoSyncSVNToolPrefabStatus(SVNToolPrefab prefab, Boolean checkIfInit = true)
     {
-        if (null != prefab && !prefab.initedFileStatus)
+        if (null != prefab && (!checkIfInit || !prefab.initedFileStatus))
         {
             SVNToolUtil.GetSVNToolObjStateJobHandle(prefab);
             ifChooseDataDirty = true;
