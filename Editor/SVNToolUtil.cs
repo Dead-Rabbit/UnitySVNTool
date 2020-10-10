@@ -46,9 +46,9 @@ public static class SVNToolUtil
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    public static List<SVNToolFile> GetNeedCommitSVNToolFileList(String path)
+    public static List<String> GetNeedCommitSVNToolFileList(String path)
     {
-        List<SVNToolFile> res = new List<SVNToolFile>();
+        List<String> res = new List<String>();
         String commandRes = UESvnOperation.GetSvnOperation().FolderStatus(path);
         if (String.IsNullOrEmpty(commandRes))
         {
@@ -59,8 +59,15 @@ public static class SVNToolUtil
         String[] resList = commandRes.Split('\n');
         foreach (string s in resList)
         {
-            if (s.Length > 8) {
-                res.Add(new SVNToolFile(s.Substring(8).Replace('\\', '/')));
+            // 如果字符串中的数据为修改后的
+            // NOTE: 当前展示的内容为一下，当前排除文件/文件夹的 创建、删除
+            if (s.Length > 8 && (
+                s.StartsWith("M ")       // 内容发生修改
+                || s.StartsWith("C ")    // 发生冲突
+                || s.StartsWith("A ")    // 预订加入到版本库
+                || s.StartsWith("K ")    // 被锁定
+                )) {
+                res.Add(s.Substring(8).Replace('\\', '/').Trim());
             }
         }
         
@@ -122,7 +129,7 @@ public class SVNToolThreadWithState
         for (Int32 i = 0; i < folders.Count; i++)
         {
             SVNToolFolder folder = folders[i];
-            folder.SetSVNToolFolderNeedSyncFiles(SVNToolUtil.GetNeedCommitSVNToolFileList(folder.path));
+            folder.SetSVNToolFolderNeedSyncFoldersAndFiles(SVNToolUtil.GetNeedCommitSVNToolFileList(folder.path));
         }
     }
 

@@ -4,11 +4,17 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
+using NUnit.Framework;
+using UnityEngine;
 
 [Serializable]
 public class SVNToolFolder : SVNToolObj
 {
+    // 当前文件夹下所需同步的文件夹
+    
+    
     // 当前文件夹下所需同步的文件
     [NonSerialized] public List<SVNToolFile> contentNeedSyncFiles = new List<SVNToolFile>();
     
@@ -29,24 +35,44 @@ public class SVNToolFolder : SVNToolObj
     /// 设置文件夹下所有的可提交的文件
     /// </summary>
     /// <param name="files"></param>
-    public void SetSVNToolFolderNeedSyncFiles(List<SVNToolFile> files)
+    public void SetSVNToolFolderNeedSyncFoldersAndFiles(List<String> paths)
     {
-        contentNeedSyncFiles = files;
-        
-        if (files.Count == 0)
+        if (paths.Count == 0)
             return;
 
-        StringBuilder stringBuilder = new StringBuilder();
-        foreach (SVNToolFile file in contentNeedSyncFiles)
+        List<SVNToolFile> newFiles = new List<SVNToolFile>();
+        List<SVNToolFolder> newFolders = new List<SVNToolFolder>();
+
+        // 判断路径是文件还是文件夹
+        foreach (string s in paths)
         {
-            file.CanBeCommit = true;
-            stringBuilder.Append(file.path).Append(" ");
+            if (Directory.Exists(s))
+            {
+                Debug.Log("directory " + s);
+                newFolders.Add(new SVNToolFolder(s));
+            } else if (File.Exists(s))
+            {
+                Debug.Log("file " + s);
+                newFiles.Add(new SVNToolFile(s));
+            }
         }
+
+        contentNeedSyncFiles = newFiles;
         
-        String[] resultFilesInfo = UESvnOperation.GetSvnOperation().ShowFileUrl(stringBuilder.ToString()).Split('\n');
-        for (Int32 i = 0; i < contentNeedSyncFiles.Count; i++)
+        if (contentNeedSyncFiles.Count > 0) 
         {
-            contentNeedSyncFiles[i].SyncFileSVNURL(resultFilesInfo[i]);
+            StringBuilder stringBuilder = new StringBuilder();
+            foreach (SVNToolFile file in contentNeedSyncFiles)
+            {
+                file.CanBeCommit = true;
+                stringBuilder.Append(file.path).Append(" ");
+            }
+            
+            String[] resultFilesInfo = UESvnOperation.GetSvnOperation().ShowFileUrl(stringBuilder.ToString()).Split('\n');
+            for (Int32 i = 0; i < contentNeedSyncFiles.Count; i++)
+            {
+                contentNeedSyncFiles[i].SyncFileSVNURL(resultFilesInfo[i]);
+            }
         }
     }
     

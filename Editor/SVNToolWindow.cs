@@ -52,7 +52,6 @@ public sealed class SVNToolWindow : EditorWindow
     public static void ShowWindow()
     {
         GetWindow(typeof(SVNToolWindow));
-        Debug.Log("123");
     }
 
     public void OnEnable()
