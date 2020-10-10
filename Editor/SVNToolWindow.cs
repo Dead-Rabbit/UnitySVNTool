@@ -23,10 +23,8 @@ public sealed class SVNToolWindow : EditorWindow
     private SVNToolPrefabWrap _prefabWrap = new SVNToolPrefabWrap(5);
     private List<SVNToolPrefab> storedPrefabs = new List<SVNToolPrefab>();
 
-    private String testClipStr = "C:/Users/Jack/Documents/MGame/MGame_Trunk/MProject/";    // Application.dataPath
-    
-    List<SVNToolFile> showResult = new List<SVNToolFile>();
-    List<SVNToolFile> hideResult = new List<SVNToolFile>();
+    readonly List<SVNToolFile> showResult = new List<SVNToolFile>();
+    readonly List<SVNToolFile> hideResult = new List<SVNToolFile>();
 
     private Boolean ifChooseDataDirty = true;
     private String showChooseResult = "";
@@ -37,8 +35,7 @@ public sealed class SVNToolWindow : EditorWindow
     #region 选择状态相关
 
     private EnumSVNToolWindowEditState m_CurrentEditState = EnumSVNToolWindowEditState.VIEW;
-    private SVNToolPrefab m_SelectedPrefab = null;
-    private Boolean m_ShowFolding = false;
+    private SVNToolPrefab m_SelectedPrefab;
 
     #endregion
 
@@ -114,24 +111,20 @@ public sealed class SVNToolWindow : EditorWindow
             _prefabWrap = JsonUtility.FromJson<SVNToolPrefabWrap>(dataAsJson);
             storedPrefabs = _prefabWrap.prefabs;
             
-            // 初始同步内容
-//            List<SVNToolPrefab> initPrefabs = new List<SVNToolPrefab>();
-//            foreach (SVNToolPrefab prefab in storedPrefabs)
-//            {
-//                // Prefab 初始化
-//                prefab.InitSVNToolPrefabFileAndFolderInfo();
-//                // 同步Prefab的内容
-//                if (prefab.ifSelected)
-//                {
-//                    initPrefabs.Add(prefab);
-//                }
-//            }
             InitSyncSVNToolPrefabStatus();
             
             // 设定默认选择
             if (storedPrefabs.Count > 0)
             {
                 SelectCurrentSVNToolPrefab(storedPrefabs[0]);
+            }
+        } else {
+            // 不存在目标文件，则拷贝Global文件
+            String globalFilePath = String.Concat(Application.dataPath, m_SVNToolSourcePath, "Global.json");
+            if (File.Exists(globalFilePath))
+            {
+                File.Copy(globalFilePath, filePath);
+                ReadSVNToolPrefabsFromJson(filePath);
             }
         }
     }
