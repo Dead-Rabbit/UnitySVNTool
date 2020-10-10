@@ -79,6 +79,8 @@ public class SVNToolFolder : SVNToolObj
             {
                 contentNeedSyncFiles[i].SyncFileSVNURL(resultFilesInfo[i]);
             }
+        } else {
+            openFolder = false;
         }
     }
     
