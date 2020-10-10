@@ -129,7 +129,7 @@ public sealed class SVNToolWindow : EditorWindow
             InitSyncSVNToolPrefabStatus();
             
             // 设定默认选择
-            if (null == m_SelectedPrefab && storedPrefabs.Count > 0)
+            if (storedPrefabs.Count > 0)
             {
                 SelectCurrentSVNToolPrefab(storedPrefabs[0]);
             }
