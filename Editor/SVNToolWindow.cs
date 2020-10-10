@@ -349,7 +349,6 @@ public sealed class SVNToolWindow : EditorWindow
                                         if (GUILayout.Button("存在新建，以及文件夹操作，请点击此处", GUILayout.Width(220)))
                                         {
                                             UESvnOperation.GetSvnOperation().CommitFile(folder.path);
-                                            Debug.Log("finish commit");
                                             InitSyncSVNToolPrefabStatus();
                                         }
                                         SetDefaultSVNToolBackgroundColor();
@@ -538,6 +537,7 @@ public sealed class SVNToolWindow : EditorWindow
                     stringBuilder.Append(file.path).Append("*");
                 }
                 UESvnOperation.GetSvnOperation().CommitFile(stringBuilder.ToString());
+                InitSyncSVNToolPrefabStatus();
             }
         }
         EditorGUILayout.EndHorizontal();
