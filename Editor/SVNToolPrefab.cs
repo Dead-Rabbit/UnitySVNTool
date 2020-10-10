@@ -27,7 +27,6 @@ public sealed class SVNToolPrefabWrap
 [Serializable]
 public sealed class SVNToolPrefab
 {
-	
 	public Int32 ID;		// 唯一ID
 	
 	public String name;	// 预设名称
@@ -40,6 +39,20 @@ public sealed class SVNToolPrefab
 	[NonSerialized] public Int32 totalCount = 0;	// 总共的文件数量
 	[NonSerialized] public Boolean initedFileStatus = false;	// 判断是否初始化过
 	public Boolean ifSelected = true;
+
+	/// <summary>
+	/// 在其他预设文件中拷贝内容
+	/// </summary>
+	/// <param name="other"></param>
+	public void CloneFromOtherSVNToolPrefab(SVNToolPrefab other)
+	{
+		name = other.name;
+		order = other.order;
+		isGlobal = other.isGlobal;
+		contentFolderPath = other.contentFolderPath;
+		contentFilePath = other.contentFilePath;
+		ifSelected = other.ifSelected;
+	}
 
 	public SVNToolPrefab()
 	{

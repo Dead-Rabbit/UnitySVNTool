@@ -18,6 +18,7 @@ public sealed class SVNToolWindow : EditorWindow
     #region 存储配置相关
 
     private String filePath;
+    private String globalFilePath;
     private String m_SVNToolSourcePath = "/Editor/Source/SVNTool/";
     private Boolean m_FinishReadData = false;
     private SVNToolPrefabWrap _prefabWrap = new SVNToolPrefabWrap(5);
@@ -55,8 +56,9 @@ public sealed class SVNToolWindow : EditorWindow
     {
         // 读取当前设置的工号
         m_SvnToolUserID = PlayerPrefs.GetString(SVN_TOOL_USER_ID_PREF_NAME);
-        
         minSize = new Vector2(850, 600);
+        
+        globalFilePath = String.Concat(Application.dataPath, m_SVNToolSourcePath, "Global.json");
     }
 
     /// <summary>
@@ -120,7 +122,6 @@ public sealed class SVNToolWindow : EditorWindow
             }
         } else {
             // 不存在目标文件，则拷贝Global文件
-            String globalFilePath = String.Concat(Application.dataPath, m_SVNToolSourcePath, "Global.json");
             if (File.Exists(globalFilePath))
             {
                 File.Copy(globalFilePath, filePath);
@@ -249,9 +250,18 @@ public sealed class SVNToolWindow : EditorWindow
                     }
 
                     GUILayout.FlexibleSpace();
+                    if (currentPrefab.name.Equals("Global")
+                        && null != m_SvnToolUserID 
+                        && !m_SvnToolUserID.Equals("Global") 
+                        && m_CurrentEditState == EnumSVNToolWindowEditState.EDIT)
+                    {
+                        if (GUILayout.Button("恢复", GUILayout.Width(40)))
+                        {
+                            DoRestoreGlobalPrefab(currentPrefab);
+                        }
+                    }
                     if (GUILayout.Button("查看", GUILayout.Width(40)))
                     {
-//                        DoSyncSVNToolPrefabStatus(currentPrefab);
                         SelectCurrentSVNToolPrefab(currentPrefab);
                     }
                 }
@@ -713,6 +723,23 @@ public sealed class SVNToolWindow : EditorWindow
         {
             SVNToolUtil.GetSVNToolObjStateJobHandle(prefab);
             ifChooseDataDirty = true;
+        }
+    }
+
+    /// <summary>
+    /// 覆盖为Global的预设
+    /// </summary>
+    /// <param name="prefab"></param>
+    private void DoRestoreGlobalPrefab(SVNToolPrefab prefab)
+    {
+        string globalDataAsJson = File.ReadAllText(globalFilePath);     //读取所有数据送到json格式的字符串里面。
+        SVNToolPrefabWrap globalWrap = JsonUtility.FromJson<SVNToolPrefabWrap>(globalDataAsJson);
+        foreach (SVNToolPrefab globalPrefab in globalWrap.prefabs)
+        {
+            if (globalPrefab.name.Equals("Global"))
+            {
+                prefab.CloneFromOtherSVNToolPrefab(globalPrefab);
+            }
         }
     }
 
