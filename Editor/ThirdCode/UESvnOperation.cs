@@ -5,6 +5,7 @@ using System.Text;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
+using NUnit.Framework.Internal;
 using UnityEditor;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -802,7 +803,12 @@ public class UESvnOperation
     public void ShowFileInExplorer(string path)
     {
         string commandline = string.Format("/c Explorer /select, {0}", path.Replace('/', '\\'));
-        Debug.Log(commandline);
+        ProcessCommand(commandline, "cmd.exe");
+    }
+
+    public void ShowCommitLog(string projectPath)
+    {
+        string commandline = string.Format("/c TortoiseProc /command:log /path:\"{0}\" /closeonend:0", projectPath);
         ProcessCommand(commandline, "cmd.exe");
     }
     

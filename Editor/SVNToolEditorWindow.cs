@@ -5,7 +5,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-public sealed class SVNToolWindow : EditorWindow
+public sealed class SVNToolEditorWindow : EditorWindow
 {
     #region 用户ID
 
@@ -46,17 +46,17 @@ public sealed class SVNToolWindow : EditorWindow
     
     #endregion
 
-    [MenuItem("SVN/SVN同步工具 #&M")]
+    [MenuItem("SVN/SVN同步工具")]
     public static void ShowWindow()
     {
-        GetWindow(typeof(SVNToolWindow));
+        GetWindow(typeof(SVNToolEditorWindow));
     }
 
     public void OnEnable()
     {
         // 读取当前设置的工号
         m_SvnToolUserID = PlayerPrefs.GetString(SVN_TOOL_USER_ID_PREF_NAME);
-        minSize = new Vector2(850, 600);
+        minSize = new Vector2(850, 500);
         
         globalFilePath = String.Concat(Application.dataPath, m_SVNToolSourcePath, "Global.json");
     }
@@ -98,7 +98,6 @@ public sealed class SVNToolWindow : EditorWindow
         }
 
         SetSVNToolPrefabGUI();
-
     }
 
     /// <summary>

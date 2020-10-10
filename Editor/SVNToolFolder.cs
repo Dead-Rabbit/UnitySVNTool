@@ -18,6 +18,8 @@ public class SVNToolFolder : SVNToolObj
     [NonSerialized] public Boolean openFolder = true;
 
     [NonSerialized] public Boolean existNewFileOrFolder;
+
+    [NonSerialized] public Boolean existFildOrFolderHasStatus;
     
     public SVNToolFolder(String path) : base(path)
     {
@@ -36,9 +38,13 @@ public class SVNToolFolder : SVNToolObj
     /// <param name="files"></param>
     public void SetSVNToolFolderNeedSyncFoldersAndFiles(List<SVNToolPath> paths)
     {
+        existFildOrFolderHasStatus = false;
+        
         if (paths.Count == 0)
             return;
 
+        existFildOrFolderHasStatus = true;
+        
         List<SVNToolFile> newFiles = new List<SVNToolFile>();
         List<SVNToolFolder> newFolders = new List<SVNToolFolder>();
 
