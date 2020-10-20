@@ -5,10 +5,7 @@ using System.Text;
 using Microsoft.Win32;
 using System.Diagnostics;
 using System.IO;
-using NUnit.Framework.Internal;
 using UnityEditor;
-using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 [System.Runtime.InteropServices.StructLayout(LayoutKind.Sequential)]
 public class SECURITY_ATTRIBUTES
@@ -231,7 +228,7 @@ public class UESvnOperation
 
         commandline += GetAuthenCmd();
         ProcessCommand(commandline);
-        
+
         if (string.IsNullOrEmpty(OutputResult))
         {
             return true;
@@ -242,6 +239,40 @@ public class UESvnOperation
         return true;
     }
 
+    /// <summary>
+    /// 获取文件夹下的svn状态(获取文件夹下可提交的文件)
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
+    public String FolderStatus(string path = "")
+    {
+        if (!Initialized)
+            return null;
+
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        String output = "";
+        string commandline = string.Format(" status {0}", path);
+        commandline += GetAuthenCmd();
+
+        ProcessCommandShowOutput(commandline, out output);
+
+        if (String.IsNullOrEmpty(output))
+        {
+            return null;
+        }
+
+        return output;
+    }
+
+    /// <summary>
+    /// 展示文件状态
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
     public bool FileStatus(string path = "")
     {
         if (!Initialized)
@@ -265,36 +296,7 @@ public class UESvnOperation
 
         return true;
     }
-    
-    /// <summary>
-    /// 获取文件夹下的svn状态(获取文件夹下可提交的文件)
-    /// </summary>
-    /// <param name="path"></param>
-    /// <returns></returns>
-    public String FolderStatus(string path = "")
-    {
-        if (!Initialized)
-            return null;
 
-        if (string.IsNullOrEmpty(path))
-        {
-            return null;
-        }
-
-        String output = "";
-        string commandline = string.Format(" status {0}", path);
-        commandline += GetAuthenCmd();
-        
-        ProcessCommandShowOutput(commandline, out output);
-        
-        if (String.IsNullOrEmpty(output))
-        {
-            return null;
-        }
-
-        return output;
-    }
-    
     /// <summary>
     /// 获取文件在SVN中的相对路径
     /// </summary>
@@ -313,9 +315,9 @@ public class UESvnOperation
         String output = "";
         string commandline = string.Format(" info {0} ", path);
         commandline += GetAuthenCmd();
-        
+
         ProcessCommandShowOutput(commandline, out output);
-        
+
         if (String.IsNullOrEmpty(output))
         {
             return null;
@@ -469,18 +471,18 @@ public class UESvnOperation
     }
 
 	private void ShowSvnError(string OutputResult)
-    {
+	{
         if (OutputResult.Contains("Write error"))
         {
             return;
         }
 		if (OutputResult.Contains ("svn upgrade")) 
 		{
-//            "版本错误，这个目录不能使用该版本的svn，请先使用手动方式操作svn " + OutputResult
+//			("版本错误，这个目录不能使用该版本的svn，请先使用手动方式操作svn " + OutputResult);
 		}
 		else if(OutputResult.Contains("svn: E"))
 		{
-//			UEEngine.UELogMan.LogMsg("svn其他错误，不处理 " + OutputResult);
+//			("svn其他错误，不处理 " + OutputResult);
 		}
         else
         {
@@ -525,6 +527,24 @@ public class UESvnOperation
 
         return true;
     }
+
+	//slow function
+    //public bool Add(string path = "")
+    //{
+    //    if (!Initialized)
+    //        return false;
+
+    //    string commandline = string.Empty;
+    //    if (!string.IsNullOrEmpty(path))
+    //    {
+    //        commandline = string.Format(" add \"{0}\" * --force", path);
+    //    }
+
+    //    commandline += GetAuthenCmd();
+    //    ProcessCommand(commandline);
+
+    //    return true;
+    //}
 
     public bool AddFile(string path = "")
     {
@@ -720,7 +740,6 @@ public class UESvnOperation
         p.StartInfo.RedirectStandardOutput = bUseStandOut;
         p.StartInfo.CreateNoWindow = false;
         p.EnableRaisingEvents = true;
-
         if (p.Start())
         {
             strs = p.StandardError.ReadToEnd();
@@ -728,8 +747,9 @@ public class UESvnOperation
             {
                 p.StandardOutput.ReadToEnd();
             }
+                
         }
-        
+
         p.WaitForExit();
         p.Close();
 
@@ -747,10 +767,9 @@ public class UESvnOperation
         p.StartInfo.RedirectStandardError = false;
         p.StartInfo.RedirectStandardOutput = true;
         p.StartInfo.CreateNoWindow = true;
+        p.StartInfo.StandardOutputEncoding = Encoding.GetEncoding("gb2312");
         p.EnableRaisingEvents = true;
-        
-//        Debug.Log(p.);
-        
+
         if (p.Start())
         {
             StandardOutput = p.StandardOutput.ReadToEnd();
@@ -774,6 +793,7 @@ public class UESvnOperation
     {
         string commandline = string.Format("/c TortoiseProc.exe /command:lock /path:\"{0}\" /closeonend:2", path);
         string log = ProcessCommand(commandline, "cmd.exe");
+        UnityEngine.Debug.Log("lock file: " + log);
     }
 
     public void UnLockFile(string path)
@@ -793,25 +813,22 @@ public class UESvnOperation
         string commandline = string.Format("/c TortoiseProc.exe /command:commit /path:\"{0}\" /closeonend:0", path);
         ProcessCommand(commandline, "cmd.exe");
     }
-    
     public void DiffFile(string path)
     {
         string commandline = string.Format("/c TortoiseProc.exe /command:diff /path:\"{0}\" /closeonend:0", path);
         ProcessCommand(commandline, "cmd.exe");
     }
-
     public void ShowFileInExplorer(string path)
     {
         string commandline = string.Format("/c Explorer /select, {0}", path.Replace('/', '\\'));
         ProcessCommand(commandline, "cmd.exe");
     }
-
     public void ShowCommitLog(string projectPath)
     {
         string commandline = string.Format("/c TortoiseProc /command:log /path:\"{0}\" /closeonend:0", projectPath);
         ProcessCommand(commandline, "cmd.exe");
     }
-    
+
     public string GetSVNPathByPath(string path)
     {
         if (string.IsNullOrEmpty(path))

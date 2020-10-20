@@ -12,7 +12,7 @@ public enum EnumSVNToolFileNeedSyncState
     NEED_COMMIT_WITHOUT_SEELCTED,    // 可提交，位被选中
     CANNOT_BE_COMMIT,    // 不可提交
 }
-
+    
 // 文件夹同步状态
 public enum EnumSVNToolFolderNeedSyncState
 {

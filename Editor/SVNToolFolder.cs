@@ -11,16 +11,16 @@ public class SVNToolFolder : SVNToolObj
 {
     // 当前文件夹下所需同步的文件夹
     [NonSerialized] public List<SVNToolFolder> contentNeedSyncFolders = new List<SVNToolFolder>();
-    
+
     // 当前文件夹下所需同步的文件
     [NonSerialized] public List<SVNToolFile> contentNeedSyncFiles = new List<SVNToolFile>();
-    
+
     [NonSerialized] public Boolean openFolder = true;
 
     [NonSerialized] public Boolean existNewFileOrFolder;
 
     [NonSerialized] public Boolean existFildOrFolderHasStatus;
-    
+
     public SVNToolFolder(String path) : base(path)
     {
         this.path = path.Trim();
@@ -39,12 +39,12 @@ public class SVNToolFolder : SVNToolObj
     public void SetSVNToolFolderNeedSyncFoldersAndFiles(List<SVNToolPath> paths)
     {
         existFildOrFolderHasStatus = false;
-        
+
         if (paths.Count == 0)
             return;
 
         existFildOrFolderHasStatus = true;
-        
+
         List<SVNToolFile> newFiles = new List<SVNToolFile>();
         List<SVNToolFolder> newFolders = new List<SVNToolFolder>();
 
@@ -58,11 +58,14 @@ public class SVNToolFolder : SVNToolObj
                 existNewFileOrFolder = true;
                 continue;
             }
-            
+
             String s = toolPath.path;
-            if (s.IndexOf('.', s.LastIndexOf('/')) > -1) {
+            if (s.IndexOf('.', s.LastIndexOf('/')) > -1)
+            {
                 newFiles.Add(new SVNToolFile(s));
-            } else {
+            }
+            else
+            {
                 existNewFileOrFolder = true;
                 newFolders.Add(new SVNToolFolder(s));
             }
@@ -70,8 +73,8 @@ public class SVNToolFolder : SVNToolObj
 
         contentNeedSyncFiles = newFiles;
         contentNeedSyncFolders = newFolders;
-        
-        if (contentNeedSyncFiles.Count > 0) 
+
+        if (contentNeedSyncFiles.Count > 0)
         {
             StringBuilder stringBuilder = new StringBuilder();
             foreach (SVNToolFile file in contentNeedSyncFiles)
@@ -79,7 +82,7 @@ public class SVNToolFolder : SVNToolObj
                 file.CanBeCommit = true;
                 stringBuilder.Append(file.path).Append(" ");
             }
-            
+
             String[] resultFilesInfo = UESvnOperation.GetSvnOperation().ShowFileUrl(stringBuilder.ToString()).Split('\n');
             for (Int32 i = 0; i < contentNeedSyncFiles.Count; i++)
             {
@@ -89,7 +92,7 @@ public class SVNToolFolder : SVNToolObj
             openFolder = false;
         }
     }
-    
+
     /// <summary>
     /// 获取当前选择的文件数量
     /// </summary>
@@ -115,7 +118,7 @@ public class SVNToolFolder : SVNToolObj
     {
         UESvnOperation.GetSvnOperation().FolderStatus(path);
     }
-    
+
     public EnumSVNToolFolderNeedSyncState GetSVNToolFileCurrentSyncState()
     {
         if (contentNeedSyncFiles.Count > 0)
@@ -124,10 +127,10 @@ public class SVNToolFolder : SVNToolObj
             {
                 return EnumSVNToolFolderNeedSyncState.SELECTED_ALL;
             }
-        
+
             return EnumSVNToolFolderNeedSyncState.SELECTED_PART;
         }
-        
+
         return EnumSVNToolFolderNeedSyncState.NONE;
     }
 }
@@ -137,7 +140,7 @@ public class SVNToolPath
     public String path;
 
     public EnumSVNToolPathType pathType;
-    
+
     public SVNToolPath(String path, EnumSVNToolPathType pathType)
     {
         this.path = path;
