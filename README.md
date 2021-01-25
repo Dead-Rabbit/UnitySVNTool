@@ -1,4 +1,4 @@
-**SVN****同步工具使用方法**
+# SVN同步工具使用方法
 
 <font size=2>Write by Dead-Rabbit</font>
 
